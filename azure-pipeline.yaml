@@ -1,0 +1,394 @@
+# https://aka.ms/yaml
+resources:
+  repositories:
+    - repository: templates
+      type: git
+      name: pipeline-templates
+
+trigger:
+  branches:
+    include:
+    - ci/gcp-dev
+    - ci/gcp-hlg
+    - ci/gcp-prd
+    - ci/gcp-hotfix-*
+  paths:
+    exclude:
+      - documentation
+      - README.md
+      - catalog-info.yaml
+
+#parameters:
+#  - name: platform
+#    displayName: 'Plataforma de Deploy'
+#    type: string
+#    default: 'GCP'
+#    values:
+#      - 'AWS'
+#      - 'GCP'
+
+variables:
+    registry: us-east4-docker.pkg.dev/tools-prj-commons-corp-a9d5/tools-arr-commons-corp
+    repository: simp-front
+    cloudProvider: GCP
+    cluster: corp-loja
+    clusterType: gke
+    namespace: financeiro
+    dockerfileLocation: Dockerfile
+    BACKSTAGE_ENABLE: false
+    pool: gke-corp-loja-build-dev
+    jdkVersion: "1.8"
+    mavenOptions: "-Xmx1024m"
+    mavenGoals: "package -s /azp/maven/settings.xml"
+    region: us-east-1
+    arguments: ''
+    securityCheckContinueOnError: true
+    brand: ''
+    buildContextDir: '.'
+    clusterNamespace: ''
+    releaseName: ${{ variables.repository }}
+    valueFile: 'values-{env}.yaml'
+    timeout: '600'
+    helmVersion: '2.16.9'
+    kubectlVersion: '1.20.2'
+    chartValidateImage: false
+    chartPath: 'environment/helm/chart'
+    chartRepoS3: 'gpa-devops-charts-helm'
+    fixedImage: false
+    customCommandsBeforeDeployScript: ''
+    extraArgs: '--debug'
+    workingDirectory: ''
+    chartRemote: true
+    chartName: gpa-apis
+    chartVersion: 0.13.6
+    provider: ${{ variables.cloudProvider }}
+
+pool: $(pool)
+
+stages:
+  #  - stage: sonarqube
+  #    variables:
+  #    - group: Sonarqube
+  #
+  #    jobs:
+  #    - job: sonarqube
+  #      steps:
+  #        - task: SonarQubePrepare@5
+  #          inputs:
+  #            SonarQube: 'sonarqube-cdm-dev'
+  #            scannerMode: 'CLI'
+  #            configMode: 'manual'
+  #            cliProjectKey: '$(SONAR_PROJECT_KEY)'
+  #            cliProjectName: 'cdm'
+  #            #extraProperties: 'sonar.branch.name=$(Build.SourceBranchName)'
+  #        - task: SonarQubeAnalyze@5
+  #        - task: SonarQubePublish@5
+  #          inputs:
+  #            pollingTimeoutSec: '300'
+
+# O Script a baixo é necessário apenas para aplicações Java
+#  - template: ci/stages/test-mvn.yml@templates
+#    parameters:
+#      jdkVersion: ${{ variables.jdkVersion }}
+#      goals: ${{ variables.mavenGoals }}
+#      mavenOptions: ${{ variables.mavenOptions }}
+#      mavenSettings: "-s /azp/maven/settings.xml -Dmaven.test.skip=true"
+
+#  - template: ci/stages/build-docker-without-backstage.yml@templates
+#    parameters:
+#      registry: ${{ variables.registry }}
+#      repository: ${{ variables.repository }}
+#      dockerfileLocation: ${{ variables.dockerfileLocation }}
+#      cluster: ${{ variables.cluster }}
+#      clusterType: ${{ variables.clusterType }}
+#      cloudProvider: ${{ variables.cloudProvider }}
+  - stage: 'Build'
+    condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/ci/gcp-dev'), 
+      eq(variables['Build.SourceBranch'], 'refs/heads/ci/gcp-hlg'), 
+      eq(variables['Build.SourceBranch'], 'refs/heads/ci/gcp-prd'), 
+      startsWith(variables['Build.SourceBranch'], 'refs/heads/ci/gcp-hotfix-')))
+    displayName: 'Build'
+    #${{ if eq(variables['cloudProvider'], 'AWS') }}:
+    #  pool: ${{ format('{0}-{1}-build-hlg', variables.clusterType, variables.cluster) }}
+    #${{ elseif eq(variables['cloudProvider'], 'GCP') }}:
+    pool: ${{ format('gke-{0}-build-dev', variables.cluster) }}
+    variables:
+      #${{ if and(eq(variables['cloudProvider'], 'GCP'), eq(variables['Build.SourceBranch'], 'refs/heads/ci/gcp-dev')) }}:
+      #  branch_environment: dev
+      #${{ elseif and(eq(variables['cloudProvider'], 'GCP'), eq(variables['Build.SourceBranch'], 'refs/heads/ci/gcp-prd')) }}:
+      #  branch_environment: prd
+      #${{ else }}:
+      #branch_environment: $[replace(variables['Build.SourceBranch'], 'refs/heads/ci/gcp-', '')]
+      ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/ci/gcp-hotfix-') }}:
+        branch_environment: hlg
+      ${{ else }}:
+        branch_environment: $[replace(variables['Build.SourceBranch'], 'refs/heads/ci/gcp-', '')]
+    jobs:
+      - job: Build
+#        variables:
+#          - group: BACKSTAGE
+#          - name: BACKSTAGE_ENABLE
+#            value: true
+        timeoutInMinutes: 20
+        steps: 
+ #         - ${{ if eq(variables['BACKSTAGE_ENABLE'], true) }}:
+ #           - template: ../steps/gcp/check-backstage.yml
+
+          - script: |
+              echo Selected Provider: ${{ variables.cloudProvider }}
+            displayName: Cloud Provider
+
+          #- ${{ if eq(variables.cloudProvider, 'GCP') }}:     
+          - template: /ci/steps/gcp/docker-login.yml@templates
+
+          - script: |
+              docker pull -q ${{ variables.registry }}/${{ variables.repository }}:$(branch_environment) || true
+            displayName: PullImage
+            continueOnError: true
+
+          - task: Docker@2
+            displayName: build
+            inputs:
+              repository: ${{ variables.registry }}/${{ variables.repository }}
+              command: build
+              Dockerfile: ${{ variables.dockerfileLocation }}
+              arguments: '--build-arg APP_ENV=$(branch_environment) --build-arg APP_BRAND=${{ variables.brand }} --build-arg AZURE_PASS=$(System.AccessToken) ${{ variables.arguments }}'
+              tags: $(branch_environment)
+              buildContext: ${{ variables.buildContextDir }}
+
+          - task: Docker@2
+            displayName: Push
+            inputs:
+              command: push
+              repository: ${{ variables.registry }}/${{ variables.repository }}
+              tags: |
+                $(branch_environment)
+
+          - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/ci/gcp-hotfix-') }}:                                
+              - script: |
+                  docker tag ${{ variables.registry }}/${{ variables.repository }}:$(branch_environment) ${{ variables.registry }}/${{ variables.repository }}:${{ replace(variables['Build.SourceBranch'], 'refs/heads/ci/gcp-', '') }}
+                  docker push ${{ variables.registry }}/${{ variables.repository }}:${{ replace(variables['Build.SourceBranch'], 'refs/heads/ci/gcp-', '') }}
+                displayName: PushImage for ${{ replace(variables['Build.SourceBranch'], 'refs/heads/ci/gcp-', '') }}
+
+      - job: Security
+        displayName: Security Check
+        dependsOn: Build
+        steps:
+          - template: /ci/steps/vulnerability-scanner.yml@templates
+            parameters:
+              image: ${{ variables.registry }}/${{ variables.repository }}:$(branch_environment)
+              securityCheckContinueOnError: ${{ variables.securityCheckContinueOnError }}
+              registry: ${{ variables.registry }}
+              region: ${{ variables.region }}
+              repository: ${{ variables.repository }}
+              cloudProvider: ${{ variables.cloudProvider }}
+
+ # - template: ci/stages/deploy-v2.yml@templates
+ #   parameters:
+ #     chartRemote: true
+ #     cluster: ${{ variables.cluster }}
+ #     clusterType: ${{ variables.clusterType }}
+ #     releaseName: ${{ variables.repository }}
+ #     chartName: gpa-apis
+ #     namespace: ${{ variables.namespace }} # o processo adiciona -dev sozinho
+ #     chartVersion: 0.13.4
+ #     valueFile: values-{env}.yaml
+ #     registry: ${{ variables.registry }}
+ #     repository: ${{ variables.repository }}
+ #     provider: ${{ variables.cloudProvider }}
+  - stage:
+    displayName: 'Deploy'
+    condition: and(not(or(failed(), canceled())), and(startsWith(variables['Build.SourceBranch'], 'refs/heads/ci/gcp-'), not(startsWith(variables['Build.SourceBranch'], 'refs/heads/ci/gcp-hotfix-'))))
+    #${{ if eq(variables['cloudProvider'], 'AWS') }}:
+    #  pool: ${{ format('{0}-{1}-build-hlg', variables.clusterType, variables.cluster) }}
+    #${{ elseif eq(variables['cloudProvider'], 'GCP') }}:
+    pool: ${{ format('gke-{0}-build-dev', variables.cluster) }}
+    variables:
+      ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/ci/gcp-hotfix-') }}:
+        branch_environment: hlg
+      ${{ else }}:
+        branch_environment: ${{ replace(variables['Build.SourceBranch'], 'refs/heads/ci/gcp-', '') }}
+      #branch_environment: ${{ replace(variables['Build.SourceBranch'], 'refs/heads/ci/gcp-', '') }}
+      valueFile: ${{ replace(variables.valueFile, '{env}', replace(variables['Build.SourceBranch'], 'refs/heads/ci/gcp-', '')) }}
+      ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/ci/gcp-prd') }}:
+        source_branch_environment: hlg
+      ${{ else }}:
+        source_branch_environment: dev
+
+      # Fixa versões para o OMS, tratamento para APP e ECOM quando estes também forem atualizados
+      #${{ if eq(variables['cloudProvider'], 'AWS') }}:
+      #  helm_version: ${{ variables.helmVersion }}
+      #${{ elseif eq(variables['cloudProvider'], 'GCP') }}:
+      helm_version: '3.5.1'
+      kubectl_version: ${{ variables.kubectlVersion }}
+      ${{ if eq(variables.workingDirectory, '') }}:
+        chart_path: ${{ variables.chartPath }}
+      ${{ else }}:
+        chart_path: ${{ variables.workingDirectory }}/${{ variables.chartPath }}
+      #${{ if or(eq(variables['cloudProvider'], 'GCP'), not(startsWith(variables.helmVersion, '2'))) }}:
+      helm_timeout: ${{ variables.timeout }}s
+      #${{ else }}:
+      #  helm_timeout: ${{ variables.timeout }}
+    jobs:
+      - ${{ if eq(variables.fixedImage, false) }}:
+        - job: PushPull
+          displayName: Pull & Push Image
+          steps:
+          #- ${{ if eq(variables.cloudProvider, 'GCP') }}:     
+            - template: /ci/steps/gcp/docker-login.yml@templates
+          #- ${{ if eq(variables.cloudProvider, 'AWS') }}: 
+          #  - template: ../steps/ecr-init.yml
+          #    variables:
+          #      region: ${{ variables.region }}
+          #      registry: ${{ variables.registry }}
+          #      repository: ${{ variables.repository }}
+              
+            - script: |
+                docker pull -q ${{ variables.registry }}/${{ variables.repository }}:$(branch_environment)
+              displayName: ECRPullImage from $(branch_environment)
+
+            #- ${{ if or( eq( variables['branch_environment'], 'prd'), eq(variables['branch_environment'], 'hlg')) }}:
+            #  - script: |
+            #      docker tag ${{ variables.registry }}/${{ variables.repository }}:$(source_branch_environment) ${{ variables.registry }}/${{ variables.repository }}:$(branch_environment)-$(Build.BuildNumber)
+            #      docker tag ${{ variables.registry }}/${{ variables.repository }}:$(source_branch_environment) ${{ variables.registry }}/${{ variables.repository }}:$(branch_environment)
+            #      docker push ${{ variables.registry }}/${{ variables.repository }}:$(branch_environment)-$(Build.BuildNumber)
+            #      docker push ${{ variables.registry }}/${{ variables.repository }}:$(branch_environment)
+            #    displayName: PushImage for $(branch_environment)
+  #         #     condition: or( eq( variables['branch_environment'], 'prd'), eq(variables['branch_environment'], 'hlg'))
+            #- ${{ else }}: 
+            - script: |
+                docker tag ${{ variables.registry }}/${{ variables.repository }}:$(branch_environment) ${{ variables.registry }}/${{ variables.repository }}:$(branch_environment)-$(Build.BuildNumber)
+                docker push ${{ variables.registry }}/${{ variables.repository }}:$(branch_environment)-$(Build.BuildNumber)
+              displayName: PushImage for dev (else)
+  #              condition: and( ne( variables['branch_environment'], 'prd'), ne(variables['branch_environment'], 'hlg'))
+
+            - script: |
+                docker image prune --all --force || true
+              displayName: Docker Prune
+
+      - deployment: DeployApplication
+        displayName: Deploy application
+        ${{ if eq(variables.fixedImage, false) }}:
+          dependsOn: PushPull
+        ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/ci/') }}:
+          ${{ if and(eq(variables.namespace, ''), eq(variables.clusterNamespace, '')) }}:
+            environment: ${{ variables.cluster }}-${{ variables['branch_environment'] }}
+          ${{ elseif ne(variables.clusterNamespace, '') }}:
+            environment: ${{ variables.cluster }}-${{ variables.clusterNamespace }}
+          ${{ else }}:
+            #${{ if and(eq(variables['Build.SourceBranch'], 'refs/heads/ci/aws-dev2'), eq(variables['cloudProvider'], 'GCP')) }}:
+            #  environment: ${{ variables.namespace }}-dev
+            #${{ elseif  and(eq(variables['Build.SourceBranch'], 'refs/heads/ci/aws-prod'), eq(variables['cloudProvider'], 'GCP')) }}:
+            #  environment: ${{ variables.namespace }}-prd
+            #${{ else }}:
+            environment: ${{ variables.namespace }}-${{ variables['branch_environment'] }}
+        ${{ else }}:
+          environment: build-env
+
+        #${{ if eq(variables['cloudProvider'], 'AWS') }}:
+        #  ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/ci/aws-prod') }}:
+        #    pool: ${{ format('{0}-{1}-release-prod', variables.clusterType, variables.cluster) }}
+        #  ${{ elseif in(variables['Build.SourceBranch'], 'refs/heads/ci/aws-dev', 'refs/heads/ci/aws-hlg', 'refs/heads/ci/aws-dev2', 'refs/heads/ci/aws-beta') }}:
+        #    pool: ${{ format('{0}-{1}-release-hlg', variables.clusterType, variables.cluster) }}
+        #  ${{ elseif startsWith(variables['Build.SourceBranch'], 'refs/heads/ci/aws-') }}:
+        #    pool: ${{ format('{0}-{1}-release-{2}', variables.clusterType, variables.cluster, replace(variables['Build.SourceBranch'], 'refs/heads/ci/aws-', '') ) }}
+        #${{ elseif and(eq(variables['cloudProvider'], 'GCP'), startsWith(variables['Build.SourceBranch'], 'refs/heads/ci/aws-')) }}:
+        #  ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/ci/aws-dev2') }}:
+        #    pool: ${{ format('gke-dig-{0}-release-dev', variables.cluster) }}
+        #  ${{ elseif eq(variables['Build.SourceBranch'], 'refs/heads/ci/aws-prod') }}:
+        #    pool: ${{ format('gke-dig-{0}-release-prd', variables.cluster) }}
+        #  ${{ else }}:
+        pool: ${{ format('gke-{0}-release-{1}', variables.cluster,  variables['branch_environment']) }}
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                  clean: true
+                  fetchDepth: 0
+                  fetchTags: false
+                  submodules: 'true'
+                  
+                - task: KubectlInstaller@0
+                  displayName: 'Kubectl installer'
+                  inputs:
+                    kubectlVersion: $(kubectl_version)
+                    
+                - task: HelmInstaller@1
+                  displayName: 'Helm installer'
+                  inputs:
+                    helmVersionToInstall: $(helm_version)
+
+                #- ${{ if eq(variables.cloudProvider, 'AWS') }}:
+                #  - script: |
+                #      CHECK_PLUGIN=$(helm plugin list | grep s3 || echo 'NotFound')
+                #      if [[ $CHECK_PLUGIN == "NotFound" ]]; then
+                #        helm plugin install https://github.com/hypnoglow/helm-s3.git --version 0.14.0 --debug
+                #      fi
+                #    displayName: 'Helm preparation'
+                #    continueOnError: true
+                #- ${{ if eq(variables.cloudProvider, 'GCP') }}:
+                - script: |
+                    CHECK_PLUGIN=$(helm plugin list | grep gcs || echo 'NotFound')
+                    if [[ $CHECK_PLUGIN == "NotFound" ]]; then
+                      helm plugin install https://github.com/hayorov/helm-gcs.git --version 0.4.2
+                    fi
+                  displayName: 'Helm preparation'
+                  continueOnError: true
+
+                - ${{ if ne(variables.customCommandsBeforeDeployScript, '') }}:
+                  - script: ${{ variables.customCommandsBeforeDeployScript }}
+                    displayName: 'CustomCommandsBeforeDeploy'
+
+                - task: HelmDeploy@0
+                  displayName: 'Helm dependency update'
+                  inputs:
+                    connectionType: 'None'
+                    command: 'dependency'
+                    arguments: "update $(chart_path)"
+
+                - task: HelmDeploy@0
+                  displayName: 'Helm lint'
+                  continueOnError: true
+                  inputs:
+                    connectionType: 'None'
+                    command: 'lint'
+                    arguments: "$(chart_path)"
+
+                #- task: HelmDeploy@0
+                #  displayName: 'Helm template'
+                #  inputs:
+                #    connectionType: 'None'
+                #    command: 'template'
+                #    ${{ if eq(variables.fixedImage, false) }}:
+                #      ${{ if eq(variables.cloudProvider, 'AWS') }}:
+                #        overrideValues: image=${{ variables.registry }}/${{ variables.repository }}:$(branch_environment)-$(Build.BuildNumber),appVersion=$(Build.BuildNumber),helm=${{ variables.helmVersion }},cloudProvider=AWS
+                #      ${{ if eq(variables.cloudProvider, 'GCP') }}:
+                #        overrideValues: image=${{ variables.registry }}/${{ variables.repository }}:$(branch_environment)-$(Build.BuildNumber),appVersion=$(Build.BuildNumber),newVersion=true,cloudProvider=GCP
+                #    arguments: "$(chart_path) -f $(chart_path)/$(valueFile)"
+
+                - task: HelmDeploy@0
+                  displayName: 'Helm deploy'
+                  inputs:
+                    connectionType: 'None'
+                    ${{ if eq(variables.namespace, '') }}:
+                      namespace: $(branch_environment)
+                    ${{ else }}:
+                      namespace: ${{ variables.namespace }}-$(branch_environment)
+                    command: 'upgrade'
+                    chartType: 'FilePath'
+                    chartPath: $(chart_path)
+                    ${{ if eq(variables.clusterNamespace, '') }}:
+                      releaseName: ${{ variables.releaseName }}-$(branch_environment)
+                    ${{ else }}:
+                      releaseName: ${{ variables.releaseName }}
+                    ${{ if eq(variables.fixedImage, false) }}:
+                      ${{ if eq(variables.chartRemote, false) }}:
+                        overrideValues: image=${{ variables.registry }}/${{ variables.repository }}:$(branch_environment)-$(Build.BuildNumber),appVersion=$(Build.BuildNumber),helmVersion="${{ variables.helmVersion }}",cloudProvider=${{ variables.cloudProvider }}
+                      #${{ if and(eq(variables['cloudProvider'], 'AWS'), eq(variables.chartRemote, true)) }}:
+                      #  overrideValues: gpa-apis.image.repository=${{ variables.registry }}/${{ variables.repository }},gpa-apis.image.tag=$(branch_environment)-$(Build.BuildNumber),gpa-apis.appVersion=$(Build.BuildNumber),gpa-apis.helmVersion="${{ variables.helmVersion }}",gpa-apis.cloudProvider=${{ variables.cloudProvider }}
+                      #${{ if and(eq(variables['cloudProvider'], 'GCP'), eq(variables.chartRemote, true)) }}:
+                      ${{ if eq(variables.chartRemote, true) }}:
+                        overrideValues: gpa-apis.image.repository=${{ variables.registry }}/${{ variables.repository }},gpa-apis.image.tag=$(branch_environment)-$(Build.BuildNumber),gpa-apis.appVersion=$(Build.BuildNumber),gpa-apis.helmVersion="${{ variables.helmVersion }}",gpa-apis.cloudProvider=${{ variables.cloudProvider }} 
+                    valueFile: $(chart_path)/$(valueFile)
+                    arguments: "--timeout $(helm_timeout) --atomic ${{ variables.extraArgs }}"
