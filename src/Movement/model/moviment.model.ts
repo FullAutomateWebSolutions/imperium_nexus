@@ -1,4 +1,4 @@
-// Sub-interfaces para os objetos aninhados do seu JSON
+
 export interface Category {
   codcategoria: number;
   desccategoria: string;
@@ -42,6 +42,76 @@ export interface PaymentMethod {
   datacriacao: string;
   dataatualizacao: string;
 }
+
+
+// ==========================================
+// CLASSES MODELO
+// ==========================================
+
+export class Category implements Category {
+  codcategoria: number = 0;
+  desccategoria: string = "";
+  indativo: boolean = true;
+  datacriacao: string = "";
+  dataatualizacao: string = "";
+
+  constructor(init?: Partial<Category>) {
+    if (init) Object.assign(this, init);
+  }
+}
+
+export class Account implements Account {
+  codconta: number = 0;
+  tipoconta: string = "";
+  descconta: string = "";
+  indativo: boolean = true;
+  datacriacao: string = "";
+  dataatualizacao: string = "";
+
+  constructor(init?: Partial<Account>) {
+    if (init) Object.assign(this, init);
+  }
+}
+
+export class Card implements Card {
+  codcartao: number = 0;
+  tipocartao: string = "";
+  desccartao: string = "";
+  indativo: boolean = true;
+  datacriacao: string = "";
+  dataatualizacao: string = "";
+
+  constructor(init?: Partial<Card>) {
+    if (init) Object.assign(this, init);
+  }
+}
+
+export class Status implements Status {
+  codstatus: number = 0;
+  descstatus: string = "";
+  desccompleta: string = "";
+  indativo: boolean = true;
+  datacriacao: string = "";
+  dataatualizacao: string = "";
+
+  constructor(init?: Partial<Status>) {
+    if (init) Object.assign(this, init);
+  }
+}
+
+export class PaymentMethod implements PaymentMethod {
+  codformpag: number = 0;
+  tipoformpag: string = "";
+  descformpag: string = "";
+  indativo: boolean = true;
+  datacriacao: string = "";
+  dataatualizacao: string = "";
+
+  constructor(init?: Partial<PaymentMethod>) {
+    if (init) Object.assign(this, init);
+  }
+}
+
 
 export class Movement {
   codmovimentacao?: string;

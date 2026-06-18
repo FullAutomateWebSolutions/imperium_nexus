@@ -1,20 +1,20 @@
 import { handleApiError, RestHttpService } from "@/api/axios";
-import { MovementById, MovementDelete, MovementFilter, MovementListResponse, MovementResponse, MovementType } from "../model/moviment.model";
+import { Card } from "../model/moviment.model";
 
 const restHttpService = new RestHttpService();
 
-async function save(params: MovementType): Promise<any> {
+async function save(params: Card): Promise<any> {
   try {
-    const response = await restHttpService.getHttpInstance().post("/movimentacao/", params);
+    const response = await restHttpService.getHttpInstance().post("/cartao/", params);
     return response.data;
   } catch (err) {
     handleApiError(err);
   }
 }
 
-async function update(params: MovementType): Promise<MovementResponse> {
+async function update(params: Card): Promise<Card> {
   try {
-    const response = await restHttpService.getHttpInstance().put<MovementResponse>("/movimentacao/", params);
+    const response = await restHttpService.getHttpInstance().put<Card>("/cartao/", params);
     return response.data;
   } catch (err) {
     handleApiError(err);
@@ -22,11 +22,11 @@ async function update(params: MovementType): Promise<MovementResponse> {
   }
 }
 
-async function list(params: MovementFilter): Promise<MovementListResponse> {
+async function list(params: Card): Promise<Card> {
   try {
     const response = await restHttpService
       .getHttpInstance()
-      .get<MovementListResponse>("/movimentacao/", {
+      .get<Card>("/cartao/", {
         params,
       });
     return response.data;
@@ -36,11 +36,11 @@ async function list(params: MovementFilter): Promise<MovementListResponse> {
   }
 }
 
-async function fetchById(data: MovementById): Promise<MovementType> {
+async function fetchById(data: Card): Promise<Card> {
   try {
     const response = await restHttpService
       .getHttpInstance()
-      .post<MovementType>("/movimentacao/findById", data);
+      .post<Card>("/cartao/findById", data);
     return response.data;
   } catch (err) {
     handleApiError(err);
@@ -48,11 +48,11 @@ async function fetchById(data: MovementById): Promise<MovementType> {
   }
 }
 
-async function destroy(params: MovementDelete): Promise<MovementResponse> {
+async function destroy(params: Card): Promise<Card> {
   try {
     const response = await restHttpService
       .getHttpInstance()
-      .delete<MovementResponse>("/movimentacao", {
+      .delete<Card>("/cartao", {
         data: params,
       });
     return response.data;

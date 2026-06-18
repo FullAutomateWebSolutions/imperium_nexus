@@ -5,7 +5,7 @@ const restHttpService = new RestHttpService();
 
 async function save(params: MovementType): Promise<any> {
   try {
-    const response = await restHttpService.getHttpInstance().post("/movimentacao/", params);
+    const response = await restHttpService.getHttpInstance().post("/status/", params);
     return response.data;
   } catch (err) {
     handleApiError(err);
@@ -14,7 +14,7 @@ async function save(params: MovementType): Promise<any> {
 
 async function update(params: MovementType): Promise<MovementResponse> {
   try {
-    const response = await restHttpService.getHttpInstance().put<MovementResponse>("/movimentacao/", params);
+    const response = await restHttpService.getHttpInstance().put<MovementResponse>("/status/", params);
     return response.data;
   } catch (err) {
     handleApiError(err);
@@ -26,7 +26,7 @@ async function list(params: MovementFilter): Promise<MovementListResponse> {
   try {
     const response = await restHttpService
       .getHttpInstance()
-      .get<MovementListResponse>("/movimentacao/", {
+      .get<MovementListResponse>("/status/", {
         params,
       });
     return response.data;
@@ -40,7 +40,7 @@ async function fetchById(data: MovementById): Promise<MovementType> {
   try {
     const response = await restHttpService
       .getHttpInstance()
-      .post<MovementType>("/movimentacao/findById", data);
+      .post<MovementType>("/status/findById", data);
     return response.data;
   } catch (err) {
     handleApiError(err);
@@ -52,7 +52,7 @@ async function destroy(params: MovementDelete): Promise<MovementResponse> {
   try {
     const response = await restHttpService
       .getHttpInstance()
-      .delete<MovementResponse>("/movimentacao", {
+      .delete<MovementResponse>("/status", {
         data: params,
       });
     return response.data;

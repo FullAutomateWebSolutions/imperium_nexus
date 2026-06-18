@@ -13,8 +13,9 @@ import {
   notification,
   Breadcrumb,
   Tag,
+  DatePicker,
 } from "antd";
-import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { DeleteOutlined, EditOutlined, SearchOutlined, ClearOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { observer } from "mobx-react-lite";
 
@@ -22,14 +23,12 @@ import { StandardTable } from "@/components/table/StandardTableSimples";
 import { useMovement } from "../hook/useMovement";
 import { FormEditing } from "@/components/form/formConfig";
 
-
-// Fallbacks de segurança caso esses arquivos ainda dependam de ajustes estruturais no seu app
-
 import { MovementType } from "../model/moviment.model";
 import { MovementForm } from "./moviment.form";
 import { navigationHistory } from "@/customer/model/customerNavigationHistory";
 
 const { Title } = Typography;
+const { RangePicker } = DatePicker;
 
 export const Movement = observer(() => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -37,12 +36,13 @@ export const Movement = observer(() => {
   const [editingMode, setEditingMode] = useState<FormEditing>("criar");
   const [form] = Form.useForm();
   
-  // Estado para os parâmetros de filtros de busca
-  const [query, setQuery] = useState(() => {
-    const search = new URLSearchParams(window.location.search);
-    // return typeof MovementQuery?.fromSearchParams === "function"
-    //   ? MovementQuery.fromSearchParams(search)
-    //   : { descmovimento: "", categoria: "", conta: "" };
+  // Estado para os parâmetros de filtros de busca estruturado com as novas datas
+  const [query, setQuery] = useState({
+    descmovimento: "",
+    codcategoria: "",
+    codconta: "",
+    datainicio: "",
+    datafim: "",
   });
 
   const [sorter, setSorter] = useState<{
@@ -57,29 +57,47 @@ export const Movement = observer(() => {
 
   const { deleteMovement, listMovement } = useMovement();
 
+  // Aciona a busca passando os estados de filtro corretos e formatando as datas para string ISO (YYYY-MM-DD)
   const handleSearch = (values: any) => {
-    const currentFilters = {
-      descmovimento: values.descmovimento,
-      // Passando as strings/IDs conforme o backend aceitar nos filtros
-      codcategoria: values.categoria, 
-      codconta: values.conta,
-    };
+    let datainicio = "";
+    let datafim = "";
 
-    // setQuery(
-    //   typeof MovementQuery === "function" 
-    //     ? new MovementQuery({ ...query, page: 0, ...currentFilters }) 
-    //     : { ...query, ...currentFilters }
-    // );
+    if (values.periodo && values.periodo.length === 2) {
+      datainicio = values.periodo[0].format("YYYY-MM-DD");
+      datafim = values.periodo[1].format("YYYY-MM-DD");
+    }
+
+    setQuery({
+      descmovimento: values.descmovimento || "",
+      codcategoria: values.categoria || "", 
+      codconta: values.conta || "",
+      datainicio,
+      datafim,
+    });
     setPagination((prev) => ({ ...prev, page: 0 }));
   };
 
-  // Hook unificado consumindo paginação, ordenação e os filtros ativos do estado 'query'
+  const handleClear = () => {
+    form.resetFields();
+    setQuery({
+      descmovimento: "",
+      codcategoria: "",
+      codconta: "",
+      datainicio: "",
+      datafim: "",
+    });
+    setPagination((prev) => ({ ...prev, page: 0 }));
+  };
+
+  // Hook unificado consumindo todos os parâmetros ativos e repassando para a API
   const movementData = listMovement({
     page: pagination.page,
     size: pagination.size,
-    // descmovimento: query?.descmovimento,
-    // codcategoria: query?.codcategoria,
-    // codconta: query?.codconta,
+    descmovimento: query.descmovimento,
+    // codcategoria: query.codcategoria,
+    // codconta: query.codconta,
+    // datainicio: query.datainicio,
+    // datafim: query.datafim,
     ...(sorter?.field && sorter?.order
       ? {
           sort: `${sorter.field},${sorter.order === "ascend" ? "asc" : "desc"}`,
@@ -88,74 +106,84 @@ export const Movement = observer(() => {
   });
   const data = movementData.data?.content ?? [];
 
+  // Configuração das colunas utilizando Column Grouping (children) do Ant Design
   const columns = [
     {
       title: "Cód.",
       key: "codmovimentacao",
-      width: "8%",
+      width: "6%",
       align: "center" as const,
       dataIndex: "codmovimentacao",
     },
     {
       title: "Descrição",
       key: "descmovimento",
-      width: "20%",
+      width: "18%",
       dataIndex: "descmovimento",
-      sorter: (a: MovementType, b: MovementType) =>
-        (a.descmovimento || "").localeCompare(b.descmovimento || ""),
+      sorter: true,
     },
     {
-      title: "Valor Unit.",
-      key: "valorunit",
-      width: "12%",
-      dataIndex: "valorunit",
-      render: (valor: string) => `R$ ${parseFloat(valor || "0").toFixed(2)}`,
+      title: "Valores e Vínculos",
+      children: [
+        {
+          title: "Valor Unit.",
+          key: "valorunit",
+          width: "11%",
+          dataIndex: "valorunit",
+          render: (valor: string) => `R$ ${parseFloat(valor || "0").toFixed(2)}`,
+        },
+        {
+          title: "Categoria",
+          key: "categoria",
+          width: "11%",
+          dataIndex: ["categoria", "desccategoria"],
+          render: (text: string) => text ? <Tag color="blue">{text}</Tag> : "-",
+        },
+        {
+          title: "Conta",
+          key: "conta",
+          width: "11%",
+          dataIndex: ["conta", "descconta"],
+          render: (text: string) => text || "-",
+        },
+        {
+          title: "Forma Pag.",
+          key: "formapagamento",
+          width: "11%",
+          dataIndex: ["formapagamento", "descformpag"],
+          render: (text: string) => text || "-",
+        },
+      ],
     },
     {
-      title: "Categoria",
-      key: "categoria",
-      width: "12%",
-      dataIndex: ["categoria", "desccategoria"],
-      render: (text: string) => text ? <Tag color="blue">{text}</Tag> : "-",
-    },
-    {
-      title: "Conta",
-      key: "conta",
-      width: "12%",
-      dataIndex: ["conta", "descconta"],
-      render: (text: string) => text || "-",
-    },
-    {
-      title: "Forma Pag.",
-      key: "formapagamento",
-      width: "12%",
-      dataIndex: ["formapagamento", "descformpag"],
-      render: (text: string) => text || "-",
-    },
-    {
-      title: "Status",
-      key: "status",
-      width: "10%",
-      align: "center" as const,
-      dataIndex: ["status", "descstatus"],
-      render: (status: string) => (
-        status ? (
-          <Tag color={status === "ABERTO" ? "orange" : "green"}>{status}</Tag>
-        ) : "-"
-      ),
-    },
-    {
-      title: "Data Mov.",
-      key: "datamov",
-      width: "12%",
-      align: "center" as const,
-      dataIndex: "datamov",
-      render: (date: string) => date ? dayjs(date).format("DD/MM/YYYY") : "-",
+      title: "Fluxo",
+      children: [
+        {
+          title: "Status",
+          key: "status",
+          width: "10%",
+          align: "center" as const,
+          dataIndex: ["status", "descstatus"],
+          render: (status: string) => (
+            status ? (
+              <Tag color={status === "ABERTO" ? "orange" : "green"}>{status}</Tag>
+            ) : "-"
+          ),
+        },
+        {
+          title: "Data Mov.",
+          key: "datamov",
+          width: "11%",
+          align: "center" as const,
+          dataIndex: "datamov",
+          render: (date: string) => date ? dayjs(date).format("DD/MM/YYYY") : "-",
+        },
+      ],
     },
     {
       title: "Ações",
       key: "actions",
-      width: "10%",
+      width: "8%",
       align: "center" as const,
       render: (_: any, record: MovementType) => (
         <Space size="small">
@@ -186,13 +214,6 @@ export const Movement = observer(() => {
     },
   ];
 
-  // function createdScreenOne() {
-  //   navigationHistory?.navigate?.("Movement", { id: 1 });
-  // }
-  // function createdScreenTwo() {
-  //   navigationHistory?.navigate?.("Movement dois", { id: 2 });
-  // }
-
   return (
     <>
       <div
@@ -203,64 +224,63 @@ export const Movement = observer(() => {
           width: "100%",
         }}
       >
-        {navigationHistory?.getBreadcrumb && (
-          <>
-            <Flex 
-              justify="space-between"
-              align="center"
-              style={{ marginBottom: 16, border: "1px solid #f0f0f0", padding: 8, borderRadius: 6 }}
-            >
-              <p>{JSON.stringify(navigationHistory.getBreadcrumb())}</p>
-              <Space>
-                {/* <Button onClick={() => navigationHistory.telaAnterior?.()}>Anterior</Button>
-                <Button onClick={() => createdScreenOne()}> Criar 1</Button>
-                <Button onClick={() => createdScreenTwo()}> Criar 2</Button> */}
-                <Button onClick={() => navigationHistory.proximaTela?.()}> Próximo</Button>
-              </Space>
-            </Flex>
-          
-            <Breadcrumb
-              style={{ textAlign: "center", marginBottom: 32, color: "#666666" }}
-              items={navigationHistory.getBreadcrumb()}
-            />
-          </>
-        )}
-        
         <Title level={3} style={{ textAlign: "center", marginBottom: 32, color: "#666666" }}>
           Movimentações Financeiras
         </Title>
 
-        <Row gutter={[24, 24]} justify="center">
-          {/* FILTROS */}
-          <Col xs={24} md={8} lg={6} xl={5}>
-            <Card title="Filtros">
+        <Row gutter={[16, 16]}>
+          {/* SEÇÃO DE FILTROS AMPLIADA COM PERÍODO DE DATAS */}
+          <Col span={24}>
+            <Card style={{ marginBottom: 16 }} bodyStyle={{ paddingBottom: 0 }}>
               <Form layout="vertical" form={form} onFinish={handleSearch}>
-                <Form.Item label="Descrição" name="descmovimento">
-                  <Input placeholder="Ex: Compra Mercado" />
-                </Form.Item>
+                <Row gutter={16} align="bottom">
+                  <Col xs={24} sm={12} md={5}>
+                    <Form.Item label="Descrição" name="descmovimento">
+                      <Input placeholder="Ex: Compra Mercado" allowClear />
+                    </Form.Item>
+                  </Col>
 
-                <Form.Item label="Categoria" name="categoria">
-                  <Input placeholder="Ex: ALIMENTACAO" />
-                </Form.Item>
+                  <Col xs={24} sm={12} md={4}>
+                    <Form.Item label="Cód. Categoria" name="categoria">
+                      <Input placeholder="Ex: 2" allowClear />
+                    </Form.Item>
+                  </Col>
 
-                <Form.Item label="Conta" name="conta">
-                  <Input placeholder="Ex: Conta Principal" />
-                </Form.Item>
+                  <Col xs={24} sm={12} md={4}>
+                    <Form.Item label="Cód. Conta" name="conta">
+                      <Input placeholder="Ex: 1" allowClear />
+                    </Form.Item>
+                  </Col>
 
-                <Space direction="vertical" style={{ width: '100%' }}>
-                  <Button type="primary" htmlType="submit" block>
-                    Pesquisar
-                  </Button>
-                  <Button type="link" onClick={() => { form.resetFields(); handleSearch({}); }} block>
-                    Limpar
-                  </Button>
-                </Space>
+                  <Col xs={24} sm={12} md={6}>
+                    <Form.Item label="Período (Data Mov.)" name="periodo">
+                      <RangePicker 
+                        format="DD/MM/YYYY" 
+                        style={{ width: '100%' }}
+                        placeholder={['Início', 'Fim']}
+                      />
+                    </Form.Item>
+                  </Col>
+
+                  <Col xs={24} sm={12} md={5}>
+                    <Form.Item>
+                      <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+                        <Button type="default" icon={<ClearOutlined />} onClick={handleClear}>
+                          Limpar
+                        </Button>
+                        <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
+                          Filtrar
+                        </Button>
+                      </Space>
+                    </Form.Item>
+                  </Col>
+                </Row>
               </Form>
             </Card>
           </Col>
 
-          {/* TABELA */}
-          <Col xs={24} md={16} lg={18} xl={19}>
+          {/* TABELA PRINCIPAL */}
+          <Col span={24}>
             <Card 
               title="Movimentações"
               extra={
@@ -279,9 +299,12 @@ export const Movement = observer(() => {
               <StandardTable
                 columns={columns}
                 dataSource={data}
-                // loading={movementdata.isPending}
+                loading={movementData.isLoading || movementData.isFetching}
                 onChange={(_, __, sorter: any) => {
-                  setSorter(sorter);
+                  setSorter({
+                    field: sorter.field,
+                    order: sorter.order,
+                  });
                 }}
                 pagination={{
                   current: pagination.page + 1,
