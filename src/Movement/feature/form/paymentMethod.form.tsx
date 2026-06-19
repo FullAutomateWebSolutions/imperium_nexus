@@ -1,53 +1,54 @@
 import { useEffect, useMemo } from "react";
 import { Button, Flex, Form, Input, notification, Space, Switch, Row, Col } from "antd";
-import { FormEditing, FormConfig } from "../../components/form/formConfig";
-import { useCategory } from "../hook/useCategory"; // Ajuste o path conforme seu projeto
+import { FormEditing, FormConfig } from "../../../components/form/formConfig";
+import { usePaymentMethod } from "../../hook/usePaymentMethod"; 
 import { ApiValidationError } from "@/api/axios";
 import dayjs from "dayjs";
-import { Category } from "../model/moviment.model"; // Ajuste o nome da classe modelo se necessário
+import { PaymentMethod } from "../../model/moviment.model";
 
-interface CategoryFormValues {
+interface PaymentMethodFormValues {
     formEditing: FormEditing;
-    data: Category;
+    data: PaymentMethod;
     onClose: () => void;
 }
 
-export const CategoryForm = ({ formEditing, data, onClose }: CategoryFormValues) => {
-    const { saveCategory, fetchByIdCategory, updateCategory } = useCategory();
-    const [form] = Form.useForm<Category>();
+export const PaymentMethodForm = ({ formEditing, data, onClose }: PaymentMethodFormValues) => {
+    const { savePaymentMethod, fetchByIdPaymentMethod, updatePaymentMethod } = usePaymentMethod();
+    const [form] = Form.useForm<PaymentMethod>();
     
     const formConfig = useMemo(() => { return new FormConfig({ formEditing }); }, [formEditing, data]);
-    const formCategory = useMemo(() => { return new Category(); }, [formEditing, data]);
+    const formPaymentMethod = useMemo(() => { return new PaymentMethod(); }, [formEditing, data]);
     
-    const { data: categoryData } = fetchByIdCategory(
-        { id: data?.codcategoria },
+    const { data: paymentData } = fetchByIdPaymentMethod(
+        { id: data?.codformpag },
         formConfig.isEdit() || formConfig.isView()
     );
 
     useEffect(() => {
-        if (!categoryData) return;
+        if (!paymentData) return;
 
-        Object.assign(formCategory, categoryData);
+        Object.assign(formPaymentMethod, paymentData);
         
         form.setFieldsValue({
-            codcategoria: categoryData.codcategoria,
-            desccategoria: categoryData.desccategoria,
-            indativo: categoryData.indativo,
-            datacriacao: categoryData.datacriacao,
-            dataatualizacao: categoryData.dataatualizacao
+            codformpag: paymentData.codformpag,
+            tipoformpag: paymentData.tipoformpag,
+            descformpag: paymentData.descformpag,
+            indativo: paymentData.indativo,
+            datacriacao: paymentData.datacriacao,
+            dataatualizacao: paymentData.dataatualizacao
         });
 
-    }, [categoryData, form]);
+    }, [paymentData, form]);
 
-    const handleSubmit = async (values: Category) => {
-        const categoryDataInstance = new Category();
-        Object.assign(categoryDataInstance, values);
-        categoryDataInstance.codcategoria = formCategory.codcategoria;
+    const handleSubmit = async (values: PaymentMethod) => {
+        const paymentDataInstance = new PaymentMethod();
+        Object.assign(paymentDataInstance, values);
+        paymentDataInstance.codformpag = formPaymentMethod.codformpag;
 
-        const mutation = formConfig.isEdit() ? updateCategory : saveCategory;
+        const mutation = formConfig.isEdit() ? updatePaymentMethod : savePaymentMethod;
         const successMessage = formConfig.isEdit() ? "Atualizado com sucesso!" : "Cadastrado com sucesso!";
 
-        mutation.mutate(categoryDataInstance, {
+        mutation.mutate(paymentDataInstance, {
             onSuccess: (e: any) => {
                 notification.success({ message: e?.message || successMessage });
                 form.resetFields();
@@ -78,13 +79,17 @@ export const CategoryForm = ({ formEditing, data, onClose }: CategoryFormValues)
                     style={{ margin: "0 auto", width: 600 }}
                 >
                     <Row gutter={16}>
-                        <Col span={18}>
-                            <Form.Item label="Descrição da Categoria" name="desccategoria">
+                        <Col span={10}>
+                            <Form.Item label="Tipo Forma Pagamento" name="tipoformpag">
                                 <Input />
                             </Form.Item>
                         </Col>
-                        
-                        <Col span={6}>
+                        <Col span={10}>
+                            <Form.Item label="Descrição Forma Pagamento" name="descformpag">
+                                <Input />
+                            </Form.Item>
+                        </Col>
+                        <Col span={4}>
                             <Form.Item label="Ativo" name="indativo" valuePropName="checked">
                                 <Switch />
                             </Form.Item>
@@ -102,9 +107,9 @@ export const CategoryForm = ({ formEditing, data, onClose }: CategoryFormValues)
                         </Space>
                     </Form.Item>
 
-                    {formConfig.isEdit() && formCategory.dataatualizacao && (
+                    {formConfig.isEdit() && formPaymentMethod.dataatualizacao && (
                         <p style={{ color: 'gray', fontSize: '12px' }}>
-                            Data de modificação: {dayjs(formCategory.dataatualizacao).format("DD/MM/YYYY HH:mm")}
+                            Data de modificação: {dayjs(formPaymentMethod.dataatualizacao).format("DD/MM/YYYY HH:mm")}
                         </p>
                     )}
                 </Form>

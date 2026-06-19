@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Table, Button, Space, Popconfirm, notification, Modal, Card } from "antd";
 import { EditOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
-import { useAccount } from "../hook/useAccount";
-import { Account } from "../model/moviment.model";
-import { AccountForm } from "./account.form";
-import { FormEditing } from "../../components/form/formConfig";
+import { useAccount } from "../../hook/useAccount";
+import { Account } from "../../model/moviment.model";
+import { AccountForm } from "../form/account.form";
+import { FormEditing } from "../../../components/form/formConfig";
+import { StandardTable } from "@/components/table/StandardTableSimples";
 
 export const AccountList = () => {
   const { listAccount, deleteAccount } = useAccount();
@@ -50,7 +51,7 @@ export const AccountList = () => {
       render: (_: any, record: Account) => (
         <Space size="middle">
           <Button type="text" icon={<EditOutlined style={{ color: "#1890ff" }} />} onClick={() => handleOpenForm("editar", record)} />
-          <Popconfirm title="Excluir esta conta?" onConfirm={() => handleDelete(record.codconta)} okText="Sim" cancelText="Não">
+          <Popconfirm title="Excluir esta conta?" onConfirm={() => handleDelete(record.codconta!)} okText="Sim" cancelText="Não">
             <Button type="text" danger icon={<DeleteOutlined />} />
           </Popconfirm>
         </Space>
@@ -60,7 +61,7 @@ export const AccountList = () => {
 
   return (
     <Card title="Listagem de Contas" extra={<Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenForm("criar")}>Nova Conta</Button>}>
-      <Table dataSource={accounts} columns={columns} rowKey="codconta" loading={isLoading} />
+      <StandardTable dataSource={Array.isArray(accounts) ? accounts : []} columns={columns} rowKey="codconta" loading={isLoading} />
       <Modal title={formMode === "criar" ? "Nova Conta" : "Editar Conta"} open={isModalOpen} onCancel={handleCloseForm} footer={null} destroyOnClose width={650}>
         <AccountForm formEditing={formMode} data={selectedData as any} onClose={handleCloseForm} />
       </Modal>

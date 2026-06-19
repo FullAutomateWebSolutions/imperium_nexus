@@ -14,7 +14,12 @@ async function save(params: Card): Promise<any> {
 
 async function update(params: Card): Promise<Card> {
   try {
-    const response = await restHttpService.getHttpInstance().put<Card>("/cartao/", params);
+    const response = await restHttpService.getHttpInstance().put<Card>(`/cartao/${params.codcartao}`, {
+
+      "tipocartao": params.tipocartao,
+      "desccartao": params.desccartao,
+      "indativo": params.indativo
+    });
     return response.data;
   } catch (err) {
     handleApiError(err);
@@ -36,11 +41,11 @@ async function list(params: Card): Promise<Card> {
   }
 }
 
-async function fetchById(data: Card): Promise<Card> {
+async function fetchById(id: number): Promise<Card> {
   try {
     const response = await restHttpService
       .getHttpInstance()
-      .post<Card>("/cartao/findById", data);
+      .get<Card>(`/cartao/${id}`);
     return response.data;
   } catch (err) {
     handleApiError(err);
@@ -48,13 +53,11 @@ async function fetchById(data: Card): Promise<Card> {
   }
 }
 
-async function destroy(params: Card): Promise<Card> {
+async function destroy(id: number): Promise<Card> {
   try {
     const response = await restHttpService
       .getHttpInstance()
-      .delete<Card>("/cartao", {
-        data: params,
-      });
+      .delete<Card>(`/cartao/${id}`);
     return response.data;
   } catch (err) {
     handleApiError(err);

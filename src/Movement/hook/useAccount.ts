@@ -15,7 +15,7 @@ export function useAccount() {
   const fetchByIdAccount = (params: { id?: number }, enabled = true) => {
     return useQuery({
       queryKey: ["accountId", params.id],
-      queryFn: () => fetchById(params),
+      queryFn: () => fetchById(params.id!),
       enabled: enabled && !!params.id,
     });
   };
@@ -28,7 +28,7 @@ export function useAccount() {
   });
 
   const deleteAccount = useMutation({
-    mutationFn: (params: { id: number }) => destroy(params),
+    mutationFn: (params: { id: number }) => destroy(params.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
     },

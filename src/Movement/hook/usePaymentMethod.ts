@@ -16,7 +16,7 @@ export function usePaymentMethod() {
   const fetchByIdPaymentMethod = (params: { id?: number }, enabled = true) => {
     return useQuery({
       queryKey: ["paymentMethodId", params.id],
-      queryFn: () => fetchById(params),
+      queryFn: () => fetchById(params.id!),
       enabled: enabled && !!params.id,
     });
   };
@@ -29,7 +29,7 @@ export function usePaymentMethod() {
   });
 
   const deletePaymentMethod = useMutation({
-    mutationFn: (params: { id: number }) => destroy(params),
+    mutationFn: (params: { id: number }) => destroy(params.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["paymentMethods"] });
     },

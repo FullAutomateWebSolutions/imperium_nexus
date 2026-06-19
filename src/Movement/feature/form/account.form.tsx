@@ -1,54 +1,55 @@
 import { useEffect, useMemo } from "react";
 import { Button, Flex, Form, Input, notification, Space, Switch, Row, Col } from "antd";
-import { FormEditing, FormConfig } from "../../components/form/formConfig";
-import { useStatus } from "../hook/useStatus"; 
+import { FormEditing, FormConfig } from "../../../components/form/formConfig";
+
 import { ApiValidationError } from "@/api/axios";
 import dayjs from "dayjs";
-import { Status } from "../model/moviment.model";
+import { Account } from "../../model/moviment.model";
+import { useAccount } from "../../hook/useAccount";
 
-interface StatusFormValues {
+interface AccountFormValues {
     formEditing: FormEditing;
-    data: Status;
+    data: Account;
     onClose: () => void;
 }
 
-export const StatusForm = ({ formEditing, data, onClose }: StatusFormValues) => {
-    const { saveStatus, fetchByIdStatus, updateStatus } = useStatus();
-    const [form] = Form.useForm<Status>();
+export const AccountForm = ({ formEditing, data, onClose }: AccountFormValues) => {
+    const { saveAccount, fetchByIdAccount, updateAccount } = useAccount();
+    const [form] = Form.useForm<Account>();
     
     const formConfig = useMemo(() => { return new FormConfig({ formEditing }); }, [formEditing, data]);
-    const formStatus = useMemo(() => { return new Status(); }, [formEditing, data]);
+    const formAccount = useMemo(() => { return new Account(); }, [formEditing, data]);
     
-    const { data: statusData } = fetchByIdStatus(
-        { id: data?.codstatus },
+    const { data: accountData } = fetchByIdAccount(
+        { id: data?.codconta },
         formConfig.isEdit() || formConfig.isView()
     );
 
     useEffect(() => {
-        if (!statusData) return;
+        if (!accountData) return;
 
-        Object.assign(formStatus, statusData);
+        Object.assign(formAccount, accountData);
         
         form.setFieldsValue({
-            codstatus: statusData.codstatus,
-            descstatus: statusData.descstatus,
-            desccompleta: statusData.desccompleta,
-            indativo: statusData.indativo,
-            datacriacao: statusData.datacriacao,
-            dataatualizacao: statusData.dataatualizacao
+            codconta: accountData.codconta,
+            tipoconta: accountData.tipoconta,
+            descconta: accountData.descconta,
+            indativo: accountData.indativo,
+            datacriacao: accountData.datacriacao,
+            dataatualizacao: accountData.dataatualizacao
         });
 
-    }, [statusData, form]);
+    }, [accountData, form]);
 
-    const handleSubmit = async (values: Status) => {
-        const statusDataInstance = new Status();
-        Object.assign(statusDataInstance, values);
-        statusDataInstance.codstatus = formStatus.codstatus;
+    const handleSubmit = async (values: Account) => {
+        const accountDataInstance = new Account();
+        Object.assign(accountDataInstance, values);
+        accountDataInstance.codconta = formAccount.codconta;
 
-        const mutation = formConfig.isEdit() ? updateStatus : saveStatus;
+        const mutation = formConfig.isEdit() ? updateAccount : saveAccount;
         const successMessage = formConfig.isEdit() ? "Atualizado com sucesso!" : "Cadastrado com sucesso!";
 
-        mutation.mutate(statusDataInstance, {
+        mutation.mutate(accountDataInstance, {
             onSuccess: (e: any) => {
                 notification.success({ message: e?.message || successMessage });
                 form.resetFields();
@@ -80,12 +81,12 @@ export const StatusForm = ({ formEditing, data, onClose }: StatusFormValues) => 
                 >
                     <Row gutter={16}>
                         <Col span={10}>
-                            <Form.Item label="Descrição Status" name="descstatus">
+                            <Form.Item label="Tipo de Conta" name="tipoconta">
                                 <Input />
                             </Form.Item>
                         </Col>
                         <Col span={10}>
-                            <Form.Item label="Descrição Completa" name="desccompleta">
+                            <Form.Item label="Descrição da Conta" name="descconta">
                                 <Input />
                             </Form.Item>
                         </Col>
@@ -107,9 +108,9 @@ export const StatusForm = ({ formEditing, data, onClose }: StatusFormValues) => 
                         </Space>
                     </Form.Item>
 
-                    {formConfig.isEdit() && formStatus.dataatualizacao && (
+                    {formConfig.isEdit() && formAccount.dataatualizacao && (
                         <p style={{ color: 'gray', fontSize: '12px' }}>
-                            Data de modificação: {dayjs(formStatus.dataatualizacao).format("DD/MM/YYYY HH:mm")}
+                            Data de modificação: {dayjs(formAccount.dataatualizacao).format("DD/MM/YYYY HH:mm")}
                         </p>
                     )}
                 </Form>

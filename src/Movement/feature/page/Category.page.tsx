@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Table, Button, Space, Popconfirm, notification, Modal, Card } from "antd";
 import { EditOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
-import { useCategory } from "../hook/useCategory";
-import { Category } from "../model/moviment.model";
-import { CategoryForm } from "./category.form";
-import { FormEditing } from "../../components/form/formConfig";
+import { useCategory } from "../../hook/useCategory";
+import { Category } from "../../model/moviment.model";
+import { CategoryForm } from "../form/category.form";
+import { FormEditing } from "../../../components/form/formConfig";
+import dayjs from "dayjs";
+import { StandardTable } from "@/components/table/StandardTableSimples";
 
 export const CategoryList = () => {
   const { listCategory, deleteCategory } = useCategory();
@@ -26,7 +28,14 @@ export const CategoryList = () => {
     setSelectedData(null);
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (record: Category) => {
+    const id = record.codcategoria;
+
+    if (id === undefined || id === null) {
+      notification.error({ message: "ID da categoria inválido." });
+      return;
+    }
+
     deleteCategory.mutate({ id }, {
       onSuccess: () => {
         notification.success({ message: "Categoria removida com sucesso!" });
@@ -57,26 +66,42 @@ export const CategoryList = () => {
       render: (ativo: boolean) => (ativo ? "Ativo" : "Inativo"),
     },
     {
+      title: "Data Cr.",
+      key: "datacriacao",
+      width: "11%",
+      align: "center" as const,
+      dataIndex: "datacriacao",
+      render: (date: string) => date ? dayjs(date).format("DD/MM/YYYY") : "-",
+    },
+    {
+      title: "Data Atu.",
+      key: "dataatualizacao",
+      width: "11%",
+      align: "center" as const,
+      dataIndex: "dataatualizacao",
+      render: (date: string) => date ? dayjs(date).format("DD/MM/YYYY") : "-",
+    },
+    {
       title: "Ações",
       key: "actions",
       width: 150,
       render: (_: any, record: Category) => (
         <Space size="middle">
-          <Button 
-            type="text" 
-            icon={<EditOutlined style={{ color: "#1890ff" }} />} 
+          <Button
+            type="text"
+            icon={<EditOutlined style={{ color: "#1890ff" }} />}
             onClick={() => handleOpenForm("editar", record)}
           />
           <Popconfirm
             title="Tem certeza que deseja deletar?"
-            onConfirm={() => handleDelete(record.codcategoria)}
+            onConfirm={() => handleDelete(record)}
             okText="Sim"
             cancelText="Não"
           >
-            <Button 
-              type="text" 
-              danger 
-              icon={<DeleteOutlined />} 
+            <Button
+              type="text"
+              danger
+              icon={<DeleteOutlined />}
             />
           </Popconfirm>
         </Space>
@@ -85,18 +110,18 @@ export const CategoryList = () => {
   ];
 
   return (
-    <Card 
-      title="Listagem de Categorias" 
+    <Card
+      title="Listagem de Categorias"
       extra={
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenForm("editar")}>
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenForm("criar")}>
           Nova Categoria
         </Button>
       }
     >
-      <Table 
-        dataSource={categories} 
-        columns={columns} 
-        rowKey="codcategoria" 
+      <StandardTable
+        dataSource={Array.isArray(categories) ? categories : []}
+        columns={columns}
+        rowKey="codcategoria"
         loading={isLoading}
       />
 
@@ -108,7 +133,7 @@ export const CategoryList = () => {
         destroyOnClose
         width={650}
       >
-        <CategoryForm formEditing={formMode} data={selectedData as any} onClose={handleCloseForm} />
+        <CategoryForm formEditing={formMode} data={selectedData as Category} onClose={handleCloseForm} />
       </Modal>
     </Card>
   );

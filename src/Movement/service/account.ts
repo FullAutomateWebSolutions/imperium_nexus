@@ -1,5 +1,5 @@
 import { handleApiError, RestHttpService } from "@/api/axios";
-import {Account} from "../model/moviment.model";
+import { Account } from "../model/moviment.model";
 
 const restHttpService = new RestHttpService();
 
@@ -14,7 +14,13 @@ async function save(params: Account): Promise<any> {
 
 async function update(params: Account): Promise<Account> {
   try {
-    const response = await restHttpService.getHttpInstance().put<Account>("/conta/", params);
+    const response = await restHttpService.getHttpInstance().put<Account>(`/conta/${params.codconta}`, {
+      tipoconta: params.tipoconta,
+      descconta: params.descconta,
+      indativo: params.indativo
+
+
+    });
     return response.data;
   } catch (err) {
     handleApiError(err);
@@ -27,7 +33,7 @@ async function list(params: Account): Promise<Account> {
     const response = await restHttpService
       .getHttpInstance()
       .get<Account>("/conta/", {
-        // params,
+        params,
       });
     return response.data;
   } catch (err) {
@@ -36,11 +42,11 @@ async function list(params: Account): Promise<Account> {
   }
 }
 
-async function fetchById(data: Account): Promise<Account> {
+async function fetchById(id: number): Promise<Account> {
   try {
     const response = await restHttpService
       .getHttpInstance()
-      .post<Account>("/conta/findById", data);
+      .get<Account>(`/conta/${id}`);
     return response.data;
   } catch (err) {
     handleApiError(err);
@@ -48,13 +54,11 @@ async function fetchById(data: Account): Promise<Account> {
   }
 }
 
-async function destroy(params: Account): Promise<Account> {
+async function destroy(id: number): Promise<Account> {
   try {
     const response = await restHttpService
       .getHttpInstance()
-      .delete<Account>("/conta", {
-        data: params,
-      });
+      .delete<Account>(`/conta/${id}`);
     return response.data;
   } catch (err) {
     handleApiError(err);

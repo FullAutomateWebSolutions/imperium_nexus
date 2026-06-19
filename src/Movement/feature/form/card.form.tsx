@@ -1,10 +1,10 @@
 import { useEffect, useMemo } from "react";
 import { Button, Flex, Form, Input, notification, Space, Switch, Row, Col } from "antd";
-import { FormEditing, FormConfig } from "../../components/form/formConfig";
-import { useCard } from "../hook/useCard"; 
+import { FormEditing, FormConfig } from "../../../components/form/formConfig";
+import { useCard } from "../../hook/useCard"; 
 import { ApiValidationError } from "@/api/axios";
 import dayjs from "dayjs";
-import { Card } from "../model/moviment.model";
+import { Card } from "../../model/moviment.model";
 
 interface CardFormValues {
     formEditing: FormEditing;

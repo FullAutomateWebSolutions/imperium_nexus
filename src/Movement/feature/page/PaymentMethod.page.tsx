@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Table, Button, Space, Popconfirm, notification, Modal, Card } from "antd";
 import { EditOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
-import { usePaymentMethod } from "../hook/usePaymentMethod";
-import { PaymentMethod } from "../model/moviment.model";
-import { PaymentMethodForm } from "./paymentMethod.form";
-import { FormEditing } from "../../components/form/formConfig";
+import { usePaymentMethod } from "../../hook/usePaymentMethod";
+import { PaymentMethod } from "../../model/moviment.model";
+import { PaymentMethodForm } from "../form/paymentMethod.form";
+import { FormEditing } from "../../../components/form/formConfig";
+import { StandardTable } from "@/components/table/StandardTableSimples";
 
 export const PaymentMethodList = () => {
   const { listPaymentMethod, deletePaymentMethod } = usePaymentMethod();
@@ -45,7 +46,7 @@ export const PaymentMethodList = () => {
       render: (_: any, record: PaymentMethod) => (
         <Space size="middle">
           <Button type="text" icon={<EditOutlined style={{ color: "#1890ff" }} />} onClick={() => handleOpenForm("editar", record)} />
-          <Popconfirm title="Excluir este método?" onConfirm={() => handleDelete(record.codformpag)} okText="Sim" cancelText="Não">
+          <Popconfirm title="Excluir este método?" onConfirm={() => handleDelete(record.codformpag!)} okText="Sim" cancelText="Não">
             <Button type="text" danger icon={<DeleteOutlined />} />
           </Popconfirm>
         </Space>
@@ -55,7 +56,7 @@ export const PaymentMethodList = () => {
 
   return (
     <Card title="Formas de Pagamento" extra={<Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenForm("criar")}>Nova Forma</Button>}>
-      <Table dataSource={methods} columns={columns} rowKey="codformpag" loading={isLoading} />
+      <StandardTable dataSource={Array.isArray(methods) ? methods : []} columns={columns} rowKey="codformpag" loading={isLoading} />
       <Modal title={formMode === "criar" ? "Nova Forma de Pagamento" : "Editar Forma de Pagamento"} open={isModalOpen} onCancel={handleCloseForm} footer={null} destroyOnClose width={650}>
         <PaymentMethodForm formEditing={formMode} data={selectedData as any} onClose={handleCloseForm} />
       </Modal>

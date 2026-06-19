@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Table, Button, Space, Popconfirm, notification, Modal, Card } from "antd";
 import { EditOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
-import { useCard } from "../hook/useCard";
-import { Card as CardModel } from "../model/moviment.model";
-import { CardForm } from "./card.form";
-import { FormEditing } from "../../components/form/formConfig";
+import { useCard } from "../../hook/useCard";
+import { Card as CardModel } from "../../model/moviment.model";
+import { CardForm } from "../form/card.form";
+import { FormEditing } from "../../../components/form/formConfig";
+import { StandardTable } from "@/components/table/StandardTableSimples";
+import dayjs from "dayjs";
 
 export const CardList = () => {
   const { listCard, deleteCard } = useCard();
@@ -38,6 +40,22 @@ export const CardList = () => {
     { title: "Tipo", dataIndex: "tipocartao", key: "tipocartao" },
     { title: "Descrição", dataIndex: "desccartao", key: "desccartao" },
     { title: "Status", dataIndex: "indativo", key: "indativo", render: (ativo: boolean) => (ativo ? "Ativo" : "Inativo") },
+        {
+          title: "Data Cr.",
+          key: "datacriacao",
+          width: "11%",
+          align: "center" as const,
+          dataIndex: "datacriacao",
+          render: (date: string) => date ? dayjs(date).format("DD/MM/YYYY") : "-",
+        },
+        {
+          title: "Data Atu.",
+          key: "dataatualizacao",
+          width: "11%",
+          align: "center" as const,
+          dataIndex: "dataatualizacao",
+          render: (date: string) => date ? dayjs(date).format("DD/MM/YYYY") : "-",
+        },
     {
       title: "Ações",
       key: "actions",
@@ -45,7 +63,7 @@ export const CardList = () => {
       render: (_: any, record: CardModel) => (
         <Space size="middle">
           <Button type="text" icon={<EditOutlined style={{ color: "#1890ff" }} />} onClick={() => handleOpenForm("editar", record)} />
-          <Popconfirm title="Excluir este cartão?" onConfirm={() => handleDelete(record.codcartao)} okText="Sim" cancelText="Não">
+          <Popconfirm title="Excluir este cartão?" onConfirm={() => handleDelete(record.codcartao!)} okText="Sim" cancelText="Não">
             <Button type="text" danger icon={<DeleteOutlined />} />
           </Popconfirm>
         </Space>
@@ -55,7 +73,7 @@ export const CardList = () => {
 
   return (
     <Card title="Listagem de Cartões" extra={<Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenForm("criar")}>Novo Cartão</Button>}>
-      <Table dataSource={cards} columns={columns} rowKey="codcartao" loading={isLoading} />
+      <StandardTable dataSource={Array.isArray(cards) ? cards : []} columns={columns} rowKey="codcartao" loading={isLoading} />
       <Modal title={formMode === "criar" ? "Novo Cartão" : "Editar Cartão"} open={isModalOpen} onCancel={handleCloseForm} footer={null} destroyOnClose width={650}>
         <CardForm formEditing={formMode} data={selectedData as any} onClose={handleCloseForm} />
       </Modal>

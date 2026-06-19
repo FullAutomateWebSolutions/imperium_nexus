@@ -14,18 +14,23 @@ import {
   Breadcrumb,
   Tag,
   DatePicker,
+  Popconfirm,
+  Select, 
 } from "antd";
 import { DeleteOutlined, EditOutlined, SearchOutlined, ClearOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { observer } from "mobx-react-lite";
 
 import { StandardTable } from "@/components/table/StandardTableSimples";
-import { useMovement } from "../hook/useMovement";
+import { useMovement } from "../../hook/useMovement";
 import { FormEditing } from "@/components/form/formConfig";
 
-import { MovementType } from "../model/moviment.model";
-import { MovementForm } from "./moviment.form";
+import { MovementType } from "../../model/moviment.model";
+import { MovementForm } from "../form/moviment.form";
 import { navigationHistory } from "@/customer/model/customerNavigationHistory";
+import { useAccount } from "@/Movement/hook/useAccount";
+import { useCard } from "@/Movement/hook/useCard";
+import { useCategory } from "@/Movement/hook/useCategory";
 
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
@@ -36,7 +41,6 @@ export const Movement = observer(() => {
   const [editingMode, setEditingMode] = useState<FormEditing>("criar");
   const [form] = Form.useForm();
   
-  // Estado para os parâmetros de filtros de busca estruturado com as novas datas
   const [query, setQuery] = useState({
     descmovimento: "",
     codcategoria: "",
@@ -56,8 +60,23 @@ export const Movement = observer(() => {
   });
 
   const { deleteMovement, listMovement } = useMovement();
+  const { listAccount } = useAccount();
+  const { listCard } = useCard();
+  const { listCategory } = useCategory();
+  const accountQuery = listAccount ? listAccount({}) : { data: null, isLoading: false };
+  const categoryQuery = listCategory ? listCategory({}) : { data: null, isLoading: false };
 
-  // Aciona a busca passando os estados de filtro corretos e formatando as datas para string ISO (YYYY-MM-DD)
+  const accountsData = accountQuery.data?.content ?? accountQuery.data ?? [];
+  const categoriesData = categoryQuery.data?.content ?? categoryQuery.data ?? [];
+
+  const handleDelete = (id: number) => {
+    deleteMovement.mutate({ id }, {
+      onSuccess: () => {
+        notification.success({ message: "Status removido com sucesso!" });
+      }
+    });
+  };
+
   const handleSearch = (values: any) => {
     let datainicio = "";
     let datafim = "";
@@ -89,15 +108,14 @@ export const Movement = observer(() => {
     setPagination((prev) => ({ ...prev, page: 0 }));
   };
 
-  // Hook unificado consumindo todos os parâmetros ativos e repassando para a API
   const movementData = listMovement({
     page: pagination.page,
     size: pagination.size,
     descmovimento: query.descmovimento,
-    // codcategoria: query.codcategoria,
-    // codconta: query.codconta,
-    // datainicio: query.datainicio,
-    // datafim: query.datafim,
+    codcategoria: query.codcategoria,
+    codconta: query.codconta,
+    datainicio: query.datainicio,
+    datafim: query.datafim,
     ...(sorter?.field && sorter?.order
       ? {
           sort: `${sorter.field},${sorter.order === "ascend" ? "asc" : "desc"}`,
@@ -106,7 +124,6 @@ export const Movement = observer(() => {
   });
   const data = movementData.data?.content ?? [];
 
-  // Configuração das colunas utilizando Column Grouping (children) do Ant Design
   const columns = [
     {
       title: "Cód.",
@@ -137,7 +154,6 @@ export const Movement = observer(() => {
           key: "categoria",
           width: "11%",
           dataIndex: ["categoria", "desccategoria"],
-          render: (text: string) => text ? <Tag color="blue">{text}</Tag> : "-",
         },
         {
           title: "Conta",
@@ -164,11 +180,6 @@ export const Movement = observer(() => {
           width: "10%",
           align: "center" as const,
           dataIndex: ["status", "descstatus"],
-          render: (status: string) => (
-            status ? (
-              <Tag color={status === "ABERTO" ? "orange" : "green"}>{status}</Tag>
-            ) : "-"
-          ),
         },
         {
           title: "Data Mov.",
@@ -183,32 +194,30 @@ export const Movement = observer(() => {
     {
       title: "Ações",
       key: "actions",
-      width: "8%",
-      align: "center" as const,
+      width: 150,
       render: (_: any, record: MovementType) => (
-        <Space size="small">
+        <Space size="middle">
           <Button
-            type="link"
-            icon={<EditOutlined />}
+            type="text"
+            icon={<EditOutlined style={{ color: "#1890ff" }} />}
             onClick={() => {
               setEditingMovement(record);
               setEditingMode("editar");
               setModalVisible(true);
             }}
           />
-          <Button
-            danger
-            type="link"
-            icon={<DeleteOutlined />}
-            loading={deleteMovement.isPending}
-            onClick={() => {
-              deleteMovement.mutate({ id: record.codmovimentacao }, {
-                onSuccess: (e) => {
-                  notification.success({ message: e?.message || "Excluído com sucesso!" });
-                }
-              });
-            }}
-          />
+          <Popconfirm
+            title="Tem certeza que deseja deletar?"
+            onConfirm={() => handleDelete(Number(record.codmovimentacao))}
+            okText="Sim"
+            cancelText="Não"
+          >
+            <Button
+              type="text"
+              danger
+              icon={<DeleteOutlined />}
+            />
+          </Popconfirm>
         </Space>
       ),
     },
@@ -216,20 +225,8 @@ export const Movement = observer(() => {
 
   return (
     <>
-      <div
-        style={{
-          padding: 24,
-          maxWidth: 1600,
-          margin: "0 auto",
-          width: "100%",
-        }}
-      >
-        <Title level={3} style={{ textAlign: "center", marginBottom: 32, color: "#666666" }}>
-          Movimentações Financeiras
-        </Title>
-
         <Row gutter={[16, 16]}>
-          {/* SEÇÃO DE FILTROS AMPLIADA COM PERÍODO DE DATAS */}
+          
           <Col span={24}>
             <Card style={{ marginBottom: 16 }} bodyStyle={{ paddingBottom: 0 }}>
               <Form layout="vertical" form={form} onFinish={handleSearch}>
@@ -240,15 +237,43 @@ export const Movement = observer(() => {
                     </Form.Item>
                   </Col>
 
+                  {/* CATEGORIA SELECT */}
                   <Col xs={24} sm={12} md={4}>
-                    <Form.Item label="Cód. Categoria" name="categoria">
-                      <Input placeholder="Ex: 2" allowClear />
+                    <Form.Item label="Categoria" name="categoria">
+                      <Select
+                        placeholder="Selecione..."
+                        allowClear
+                        showSearch
+                        loading={categoryQuery.isLoading}
+                        optionFilterProp="children"
+                        filterOption={(input, option) =>
+                          String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                        }
+                        options={categoriesData?.map((cat: any) => ({
+                          value: cat.codcategoria,
+                          label: cat.desccategoria,
+                        }))}
+                      />
                     </Form.Item>
                   </Col>
 
+                  {/* CONTA SELECT */}
                   <Col xs={24} sm={12} md={4}>
-                    <Form.Item label="Cód. Conta" name="conta">
-                      <Input placeholder="Ex: 1" allowClear />
+                    <Form.Item label="Conta" name="conta">
+                      <Select
+                        placeholder="Selecione..."
+                        allowClear
+                        showSearch
+                        loading={accountQuery.isLoading}
+                        optionFilterProp="children"
+                        filterOption={(input, option) =>
+                          String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                        }
+                        options={accountsData?.map((acc: any) => ({
+                          value: acc.codconta,
+                          label: acc.descconta,
+                        }))}
+                      />
                     </Form.Item>
                   </Col>
 
@@ -322,7 +347,7 @@ export const Movement = observer(() => {
             </Card>
           </Col>
         </Row>
-      </div>
+ 
 
       <Modal
         title={editingMode === "criar" ? "Nova Movimentação" : "Editar Movimentação"}

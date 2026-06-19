@@ -14,7 +14,13 @@ async function save(params: PaymentMethod): Promise<any> {
 
 async function update(params: PaymentMethod): Promise<PaymentMethod> {
   try {
-    const response = await restHttpService.getHttpInstance().put<PaymentMethod>("/formaPagamento/", params);
+    const response = await restHttpService.getHttpInstance().put<PaymentMethod>(`/formaPagamento/${params.codformpag}`, 
+      {
+    "tipoformpag": params.tipoformpag,
+    "descformpag": params.descformpag,
+      "indativo" : params.indativo
+      }
+    );
     return response.data;
   } catch (err) {
     handleApiError(err);
@@ -36,11 +42,11 @@ async function list(params: PaymentMethod): Promise<PaymentMethod> {
   }
 }
 
-async function fetchById(data: PaymentMethod): Promise<PaymentMethod> {
+async function fetchById(id: number): Promise<PaymentMethod> {
   try {
     const response = await restHttpService
       .getHttpInstance()
-      .post<PaymentMethod>("/formaPagamento/findById", data);
+      .get<PaymentMethod>(`/formaPagamento/${id}`);
     return response.data;
   } catch (err) {
     handleApiError(err);
@@ -48,13 +54,11 @@ async function fetchById(data: PaymentMethod): Promise<PaymentMethod> {
   }
 }
 
-async function destroy(params: PaymentMethod): Promise<PaymentMethod> {
+async function destroy(id: number): Promise<PaymentMethod> {
   try {
     const response = await restHttpService
       .getHttpInstance()
-      .delete<PaymentMethod>("/formaPagamento", {
-        data: params,
-      });
+      .delete<PaymentMethod>(`/formaPagamento/${id}`);
     return response.data;
   } catch (err) {
     handleApiError(err);

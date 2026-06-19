@@ -10,19 +10,19 @@ import {
 } from "@ant-design/icons";
 
 // Importações dos formulários e listagens
-import { FormEditing } from "../../components/form/formConfig";
-import { CategoryForm } from "./category.form";
-import { AccountForm } from "./account.form";
-import { CardForm } from "./card.form";
-import { StatusForm } from "./status.form";
-import { PaymentMethodForm } from "./paymentMethod.form";
+import { FormEditing } from "../../../components/form/formConfig";
+import { CategoryForm } from "../form/category.form";
+import { AccountForm } from "../form/account.form";
+import { CardForm } from "../form/card.form";
+import { StatusForm } from "../form/status.form";
+import { PaymentMethodForm } from "../form/paymentMethod.form";
 
-import { CategoryList } from "./CategoryList";
-import { AccountList } from "./AccountList";
-import { CardList } from "./CardList";
-import { StatusList } from "./StatusList";
-import { PaymentMethodList } from "./PaymentMethodList";
-import { Movement } from "./moviment.page";
+import { CategoryList } from "./Category.page";
+import { AccountList } from "./Account.page";
+import { CardList } from "./Card.page";
+import { StatusList } from "./StatusList.page";
+import { PaymentMethodList } from "./PaymentMethod.page";
+import { Movement } from "./movimentList.page";
 
 const { Title, Text } = Typography;
 
@@ -43,7 +43,7 @@ export const ManagementDashboard = () => {
       title: "Categorias",
       description: "Gerenciar categorias de movimentos",
       icon: <AppstoreOutlined style={{ fontSize: 24, color: "#1890ff" }} />,
-      form: <CategoryForm formEditing={"editar"} data={{} as any} onClose={handleCloseAll} />,
+      form: <CategoryForm formEditing={"criar"} data={{} as any} onClose={handleCloseAll} />,
       list: <CategoryList />
     },
     {
@@ -51,7 +51,7 @@ export const ManagementDashboard = () => {
       title: "Contas Bancárias",
       description: "Gerenciar contas e saldos",
       icon: <WalletOutlined style={{ fontSize: 24, color: "#52c41a" }} />,
-      form: <AccountForm formEditing={"editar"} data={{} as any} onClose={handleCloseAll} />,
+      form: <AccountForm formEditing={"criar"} data={{} as any} onClose={handleCloseAll} />,
       list: <AccountList />
     },
     {
@@ -59,7 +59,7 @@ export const ManagementDashboard = () => {
       title: "Cartões de Crédito",
       description: "Cadastrar e editar cartões",
       icon: <CreditCardOutlined style={{ fontSize: 24, color: "#faad14" }} />,
-      form: <CardForm formEditing={"editar"} data={{} as any} onClose={handleCloseAll} />,
+      form: <CardForm formEditing={"criar"} data={{} as any} onClose={handleCloseAll} />,
       list: <CardList />
     },
     {
@@ -67,7 +67,7 @@ export const ManagementDashboard = () => {
       title: "Status",
       description: "Fluxos e situações de lançamentos",
       icon: <CheckCircleOutlined style={{ fontSize: 24, color: "#13c2c2" }} />,
-      form: <StatusForm formEditing={"editar"} data={{} as any} onClose={handleCloseAll} />,
+      form: <StatusForm formEditing={"criar"} data={{} as any} onClose={handleCloseAll} />,
       list: <StatusList />
     },
     {
@@ -75,7 +75,7 @@ export const ManagementDashboard = () => {
       title: "Formas de Pagamento",
       description: "Gerenciar métodos de pagamento",
       icon: <BarcodeOutlined style={{ fontSize: 24, color: "#722ed1" }} />,
-      form: <PaymentMethodForm formEditing={"editar"} data={{} as any} onClose={handleCloseAll} />,
+      form: <PaymentMethodForm formEditing={"criar"} data={{} as any} onClose={handleCloseAll} />,
       list: <PaymentMethodList />
     },
      {
@@ -83,6 +83,7 @@ export const ManagementDashboard = () => {
       title: "Movimentos",
       description: "Gerenciar todos os movimentos",
       icon: <AppstoreOutlined style={{ fontSize: 24, color: "#722ed1" }} />,
+      with: 1200,
     //   form: <PaymentMethodForm formEditing={"editar"} data={{} as any} onClose={handleCloseAll} />,
       list: <Movement />
     },
@@ -162,7 +163,7 @@ export const ManagementDashboard = () => {
           onCancel={handleCloseAll}
           footer={null}
           destroyOnClose
-          width={900} 
+          width={item.with ? item.with : 900} 
         >
           <div style={{ marginTop: 20 }}>
             {item.list}

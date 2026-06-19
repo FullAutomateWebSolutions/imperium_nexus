@@ -15,7 +15,7 @@ export function useCard() {
   const fetchByIdCard = (params: { id?: number }, enabled = true) => {
     return useQuery({
       queryKey: ["cardId", params.id],
-      queryFn: () => fetchById(params),
+      queryFn: () => fetchById(params.id!),
       enabled: enabled && !!params.id,
     });
   };
@@ -28,7 +28,7 @@ export function useCard() {
   });
 
   const deleteCard = useMutation({
-    mutationFn: (params: { id: number }) => destroy(params),
+    mutationFn: (params: { id: number }) => destroy(params.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cards"] });
     },

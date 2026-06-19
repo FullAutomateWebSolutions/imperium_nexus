@@ -11,9 +11,10 @@ interface StandardTableProps<T> extends TableProps<T> {
 }
 
 const headerStyle: React.CSSProperties = {
-  fontSize: "12px",
+  fontSize: "11px",
   fontWeight: 500,
-  padding: "4px 3px", 
+  padding: "2px 4px",
+  height: "24px",
 };
 
 export function StandardTable<T extends object>({
@@ -28,12 +29,14 @@ export function StandardTable<T extends object>({
   return (
     <Table<T>
       bordered
+      size="small"
+      tableLayout="fixed"
       style={{
         textAlign: "end",
         maxWidth: "100%",
       }}
       footer={() => (
-        <Text type="secondary" style={{ fontSize: 12 }}>
+        <Text type="secondary" style={{ fontSize: 11 }}>
           {`Total de registros: ${dataSource?.length ?? 0}`}
         </Text>
       )}
@@ -47,16 +50,19 @@ export function StandardTable<T extends object>({
         }),
         onCell: () => ({
           style: {
-            padding: "6px 6px", 
-            fontSize: "12px", 
+            padding: "2px 4px",
+            fontSize: "11px",
+            lineHeight: 1,
+            height: "24px",
           },
         }),
       }))}
       rowClassName={() => "compact-row"}
       loading={loading}
       pagination={pagination}
-      locale={{ emptyText: <Text type="secondary">{emptyText}</Text> }}
-      size="small"
+      locale={{
+        emptyText: <Text type="secondary">{emptyText}</Text>,
+      }}
       {...rest}
     />
   );

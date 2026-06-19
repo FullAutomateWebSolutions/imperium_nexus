@@ -16,7 +16,7 @@ export function useStatus() {
   const fetchByIdStatus = (params: { id?: number }, enabled = true) => {
     return useQuery({
       queryKey: ["statusId", params.id],
-      queryFn: () => fetchById(params),
+      queryFn: () => fetchById(params.id!),
       enabled: enabled && !!params.id,
     });
   };
@@ -29,7 +29,7 @@ export function useStatus() {
   });
 
   const deleteStatus = useMutation({
-    mutationFn: (params: { id: number }) => destroy(params),
+    mutationFn: (params: { id: number }) => destroy(params.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["statusList"] });
     },

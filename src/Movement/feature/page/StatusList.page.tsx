@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Table, Button, Space, Popconfirm, notification, Modal, Card } from "antd";
 import { EditOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
-import { useStatus } from "../hook/useStatus";
-import { Status } from "../model/moviment.model";
-import { StatusForm } from "./status.form";
-import { FormEditing } from "../../components/form/formConfig";
+import { useStatus } from "../../hook/useStatus";
+import { Status } from "../../model/moviment.model";
+import { StatusForm } from "../form/status.form";
+import { FormEditing } from "../../../components/form/formConfig";
+import { StandardTable } from "@/components/table/StandardTableSimples";
 
 export const StatusList = () => {
   const { listStatus, deleteStatus } = useStatus();
@@ -45,7 +46,7 @@ export const StatusList = () => {
       render: (_: any, record: Status) => (
         <Space size="middle">
           <Button type="text" icon={<EditOutlined style={{ color: "#1890ff" }} />} onClick={() => handleOpenForm("editar", record)} />
-          <Popconfirm title="Excluir este status?" onConfirm={() => handleDelete(record.codstatus)} okText="Sim" cancelText="Não">
+          <Popconfirm title="Excluir este status?" onConfirm={() => handleDelete(record.codstatus!)} okText="Sim" cancelText="Não">
             <Button type="text" danger icon={<DeleteOutlined />} />
           </Popconfirm>
         </Space>
@@ -55,7 +56,7 @@ export const StatusList = () => {
 
   return (
     <Card title="Listagem de Status" extra={<Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenForm("criar")}>Novo Status</Button>}>
-      <Table dataSource={statusData} columns={columns} rowKey="codstatus" loading={isLoading} />
+      <StandardTable dataSource={Array.isArray(statusData) ? statusData : []} columns={columns} rowKey="codstatus" loading={isLoading} />
       <Modal title={formMode === "criar" ? "Novo Status" : "Editar Status"} open={isModalOpen} onCancel={handleCloseForm} footer={null} destroyOnClose width={650}>
         <StatusForm formEditing={formMode} data={selectedData as any} onClose={handleCloseForm} />
       </Modal>

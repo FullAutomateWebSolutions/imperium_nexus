@@ -15,7 +15,7 @@ export function useCategory() {
   const fetchByIdCategory = (params: { id?: number }, enabled = true) => {
     return useQuery({
       queryKey: ["categoryId", params.id],
-      queryFn: () => fetchById(params),
+      queryFn: () => fetchById(params.id!),
       enabled: enabled && !!params.id,
     });
   };
@@ -28,7 +28,7 @@ export function useCategory() {
   });
 
   const deleteCategory = useMutation({
-    mutationFn: (params: { id: number }) => destroy(params),
+    mutationFn: (params: { id: number }) => destroy(params.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
     },

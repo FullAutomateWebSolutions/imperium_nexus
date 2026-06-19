@@ -14,7 +14,10 @@ async function save(params: Category): Promise<any> {
 
 async function update(params: Category): Promise<Category> {
   try {
-    const response = await restHttpService.getHttpInstance().put<Category>("/categoria/", params);
+    const response = await restHttpService.getHttpInstance().put<Category>(`/categoria/${params.codcategoria}`, {
+      desccategoria: params.desccategoria,
+      indativo : params.indativo
+    });
     return response.data;
   } catch (err) {
     handleApiError(err);
@@ -36,11 +39,9 @@ async function list(params: Category): Promise<Category> {
   }
 }
 
-async function fetchById(data: Category): Promise<Category> {
+async function fetchById(id: number): Promise<Category> {
   try {
-    const response = await restHttpService
-      .getHttpInstance()
-      .post<Category>("/categoria/findById", data);
+    const response = await restHttpService .getHttpInstance().get<Category>(`/categoria/${id}`);
     return response.data;
   } catch (err) {
     handleApiError(err);
@@ -48,13 +49,11 @@ async function fetchById(data: Category): Promise<Category> {
   }
 }
 
-async function destroy(params: Category): Promise<Category> {
+async function destroy(id: number): Promise<Category> {
   try {
     const response = await restHttpService
       .getHttpInstance()
-      .delete<Category>("/categoria", {
-        data: params,
-      });
+      .delete<Category>(`/categoria/${id}`);
     return response.data;
   } catch (err) {
     handleApiError(err);

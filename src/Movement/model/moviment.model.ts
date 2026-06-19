@@ -1,46 +1,46 @@
 
 export interface Category {
-  codcategoria: number;
+  codcategoria: number | undefined;
   desccategoria: string;
   indativo: boolean;
-  datacriacao: string;
-  dataatualizacao: string;
+  datacriacao?: string | undefined;
+  dataatualizacao?: string| undefined;
 }
 
 export interface Account {
-  codconta: number;
+  codconta: number | undefined;
   tipoconta: string;
   descconta: string;
   indativo: boolean;
-  datacriacao: string;
-  dataatualizacao: string;
+  datacriacao?: string | undefined;
+  dataatualizacao?: string| undefined;
 }
 
 export interface Card {
-  codcartao: number;
+  codcartao: number | undefined;
   tipocartao: string;
   desccartao: string;
   indativo: boolean;
-  datacriacao: string;
-  dataatualizacao: string;
+  datacriacao?: string | undefined;
+  dataatualizacao?: string| undefined;
 }
 
 export interface Status {
-  codstatus: number;
+  codstatus: number | undefined;
   descstatus: string;
   desccompleta: string;
   indativo: boolean;
-  datacriacao: string;
-  dataatualizacao: string;
+   datacriacao?: string | undefined;
+  dataatualizacao?: string| undefined;
 }
 
 export interface PaymentMethod {
-  codformpag: number;
+  codformpag: number | undefined;
   tipoformpag: string;
   descformpag: string;
   indativo: boolean;
-  datacriacao: string;
-  dataatualizacao: string;
+  datacriacao?: string | undefined;
+  dataatualizacao?: string| undefined;
 }
 
 
@@ -49,11 +49,11 @@ export interface PaymentMethod {
 // ==========================================
 
 export class Category implements Category {
-  codcategoria: number = 0;
+  codcategoria: number | undefined;
   desccategoria: string = "";
   indativo: boolean = true;
-  datacriacao: string = "";
-  dataatualizacao: string = "";
+  datacriacao?: string | undefined;
+  dataatualizacao?: string | undefined;
 
   constructor(init?: Partial<Category>) {
     if (init) Object.assign(this, init);
@@ -61,12 +61,12 @@ export class Category implements Category {
 }
 
 export class Account implements Account {
-  codconta: number = 0;
+  codconta: number | undefined;
   tipoconta: string = "";
   descconta: string = "";
   indativo: boolean = true;
-  datacriacao: string = "";
-  dataatualizacao: string = "";
+  datacriacao?: string | undefined;
+  dataatualizacao?: string | undefined;
 
   constructor(init?: Partial<Account>) {
     if (init) Object.assign(this, init);
@@ -74,12 +74,12 @@ export class Account implements Account {
 }
 
 export class Card implements Card {
-  codcartao: number = 0;
+  codcartao: number | undefined;
   tipocartao: string = "";
   desccartao: string = "";
   indativo: boolean = true;
-  datacriacao: string = "";
-  dataatualizacao: string = "";
+  datacriacao?: string | undefined;
+  dataatualizacao?: string | undefined;
 
   constructor(init?: Partial<Card>) {
     if (init) Object.assign(this, init);
@@ -87,12 +87,12 @@ export class Card implements Card {
 }
 
 export class Status implements Status {
-  codstatus: number = 0;
+  codstatus: number | undefined;
   descstatus: string = "";
   desccompleta: string = "";
   indativo: boolean = true;
-  datacriacao: string = "";
-  dataatualizacao: string = "";
+  datacriacao?: string | undefined;
+  dataatualizacao?: string | undefined;
 
   constructor(init?: Partial<Status>) {
     if (init) Object.assign(this, init);
@@ -100,12 +100,12 @@ export class Status implements Status {
 }
 
 export class PaymentMethod implements PaymentMethod {
-  codformpag: number = 0;
+  codformpag: number | undefined;
   tipoformpag: string = "";
   descformpag: string = "";
   indativo: boolean = true;
-  datacriacao: string = "";
-  dataatualizacao: string = "";
+  datacriacao?: string | undefined;
+  dataatualizacao?: string | undefined;
 
   constructor(init?: Partial<PaymentMethod>) {
     if (init) Object.assign(this, init);
