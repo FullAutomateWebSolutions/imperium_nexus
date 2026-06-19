@@ -1,7 +1,7 @@
 import React from "react";
 import { Drawer, Descriptions, Divider, Typography, Row, Col, Space } from "antd";
 import dayjs from "dayjs";
-import { MovementType } from "../model/moviment.model";
+import { MovementType } from "@/Movement/model/moviment.model";
 
 const { Title, Text } = Typography;
 
@@ -14,7 +14,7 @@ interface MovementDetailProps {
 export const MovementDetail: React.FC<MovementDetailProps> = ({ visible, onClose, movement }) => {
   if (!movement) return null;
 
-  // Cálculos matemáticos baseados nos dados brutos do JSON
+
   const vUnit = parseFloat(movement.valorunit || "0");
   const vJuros = parseFloat(movement.valorjuros || "0");
   const totalParcela = vUnit + vJuros;
@@ -33,7 +33,7 @@ export const MovementDetail: React.FC<MovementDetailProps> = ({ visible, onClose
         </Space>
       }
       placement="right"
-      width={window.innerWidth > 768 ? 600 : "100%"} // Responsivo para mobile
+      width={window.innerWidth > 768 ? 600 : "100%"} 
       onClose={onClose}
       open={visible}
     >
@@ -54,7 +54,7 @@ export const MovementDetail: React.FC<MovementDetailProps> = ({ visible, onClose
         </Descriptions.Item>
       </Descriptions>
 
-      {/* SEÇÃO 2: CRONOGRAMA DE PARCELAS */}
+      {/*  CRONOGRAMA DE PARCELAS */}
       <Divider orientation="left">Fluxo e Parcelamento</Divider>
       <Descriptions column={2} layout="vertical" bordered size="small">
         <Descriptions.Item label="Tipo de Fluxo">
@@ -73,7 +73,7 @@ export const MovementDetail: React.FC<MovementDetailProps> = ({ visible, onClose
         </Descriptions.Item>
       </Descriptions>
 
-      {/* SEÇÃO 3: ENTIDADES E VÍNCULOS */}
+      {/*  ENTIDADES E VÍNCULOS */}
       <Divider orientation="left">Vínculos e Origem</Divider>
       <Descriptions column={2} layout="vertical" bordered size="small">
         <Descriptions.Item label="Categoria">
@@ -90,7 +90,7 @@ export const MovementDetail: React.FC<MovementDetailProps> = ({ visible, onClose
         </Descriptions.Item>
       </Descriptions>
 
-      {/* SEÇÃO 4: DATAS E AUDITORIA */}
+      {/*  DATAS E AUDITORIA */}
       <Divider orientation="left">Linha do Tempo / Auditoria</Divider>
       <Descriptions column={1} layout="horizontal" bordered size="small">
         <Descriptions.Item label="Data da Movimentação">

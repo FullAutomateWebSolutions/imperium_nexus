@@ -22,7 +22,7 @@ import {
   EditOutlined, 
   SearchOutlined, 
   ClearOutlined, 
-  EyeOutlined // Importado o ícone de Olho
+  EyeOutlined 
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { observer } from "mobx-react-lite";
@@ -32,7 +32,7 @@ import { FormEditing } from "@/components/form/formConfig";
 
 import { MovementType } from "../../model/moviment.model";
 import { MovementForm } from "../form/moviment.form";
-import { MovementDetail } from "./MovementDetail"; // Importado o componente de detalhes
+import { MovementDetail } from "./MovementDetail"; 
 import { useAccount } from "@/Movement/hook/useAccount";
 import { useCard } from "@/Movement/hook/useCard";
 import { useCategory } from "@/Movement/hook/useCategory";
@@ -47,7 +47,6 @@ export const Movement = observer(() => {
   const [editingMode, setEditingMode] = useState<FormEditing>("criar");
   const [form] = Form.useForm();
   
-  // Novos estados para controlar a tela de detalhes
   const [detailVisible, setDetailVisible] = useState(false);
   const [detailMovement, setDetailMovement] = useState<MovementType | null>(null);
 
@@ -357,6 +356,10 @@ export const Movement = observer(() => {
   return (
     <>
       <Row gutter={[16, 16]}>
+      <div style={{ marginBottom: "24px" }}>
+        <Title level={2}>Movimentações</Title>
+        <Text type="secondary">Selecione uma das opções abaixo para realizar operações no sistema.</Text>
+      </div>
         <Col span={24}>
           <Card style={{ marginBottom: 16 }} bodyStyle={{ paddingBottom: 0 }}>
             <Form layout="vertical" form={form} onFinish={handleSearch}>

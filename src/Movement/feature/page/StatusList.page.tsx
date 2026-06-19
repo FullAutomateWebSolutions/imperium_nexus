@@ -11,7 +11,7 @@ export const StatusList = () => {
   const { listStatus, deleteStatus } = useStatus();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedData, setSelectedData] = useState<Status | null>(null);
-  const [formMode, setFormMode] = useState<FormEditing>("criar");
+  const [formMode, setFormMode] = useState<FormEditing>("criar"); 
 
   const { data: statusData, isLoading } = listStatus({});
 

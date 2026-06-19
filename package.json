@@ -47,7 +47,7 @@
     "react-imask": "^7.6.1",
     "react-input-mask": "^2.0.4",
     "react-rnd": "^10.4.11",
-    "react-router-dom": "^6.26.0",
+    "react-router-dom": "^6.30.4",
     "recharts": "^2.15.3",
     "validation-br": "^1.6.4",
     "vanilla-masker": "^1.2.0",

@@ -5,15 +5,12 @@ import dayjs from "dayjs";
 import "dayjs/locale/pt-br";
 import { useMovement } from "../../hook/useMovement";
 
-const { Text } = Typography;
-
+const { Title, Text } = Typography;
 export const MovementDashboardComp: React.FC = () => {
-  // 1. Busca todas as movimentações do banco de dados
   const { listMovement } = useMovement();
   const movementQuery = listMovement({ page: 0, size: 5000 });
   const dataRaw = movementQuery.data?.content ?? [];
 
-  // 2. DETECTA O HORIZONTE CRONOLÓGICO AUTOMATICAMENTE (Meses em colunas)
   const MESES_CONFIG = useMemo(() => {
     const dataMinima = dayjs().startOf("year");
     let dataMaxima = dayjs().endOf("year");
@@ -45,37 +42,30 @@ export const MovementDashboardComp: React.FC = () => {
     return listaMeses;
   }, [dataRaw]);
 
-  // 3. PROCESSAMENTO DA MATRIZ CONSOLIDADA POR ID DE CATEGORIA
   const matrixData = useMemo(() => {
     if (!dataRaw.length) return [];
 
-    // Objeto temporário para consolidar as linhas de despesas por ID único de Categoria
     const linhasDinamicas: Record<string, { codcategoria: number; categoria: string; valores: Record<string, number>; rowType: string }> = {};
 
-    // Linha fixa exclusiva para as Receitas
     const linhaEntrada = {
       categoria: "RECEITA",
       valores: {} as Record<string, number>,
       rowType: "entrada"
     };
 
-    // Inicializa os meses zerados para a linha de receita
     MESES_CONFIG.forEach(m => {
       linhaEntrada.valores[m.chaveIdentificadora] = 0;
     });
 
-    // Passo 1: Descobrir e estruturar uma única linha para cada ID de categoria
     dataRaw.forEach((item: any) => {
       const codCat = item.categoria?.codcategoria || 0;
       const nomeCategoria = (item.categoria?.desccategoria || "SEM CATEGORIA").toUpperCase();
       const valorUnitario = parseFloat(item.valorunit || "0") + parseFloat(item.valorjuros || "0");
 
-      // Filtra as entradas para irem juntas na linha topo de Receita
       if (valorUnitario > 0 && (nomeCategoria.includes("ENTRADA") || nomeCategoria.includes("RECEITA"))) {
         return; 
       }
 
-      // Agrupamento estrito por ID da categoria
       const chaveLinha = `cat-id-${codCat}`;
 
       if (!linhasDinamicas[chaveLinha]) {
@@ -86,14 +76,12 @@ export const MovementDashboardComp: React.FC = () => {
           rowType: "data"
         };
         
-        // Zera todos os meses do grid para essa categoria unificada
         MESES_CONFIG.forEach(m => {
           linhasDinamicas[chaveLinha].valores[m.chaveIdentificadora] = 0;
         });
       }
     });
 
-    // Passo 2: Distribuir os valores e somar acumulado mês a mês (inclusive as parcelas)
     dataRaw.forEach((item: any) => {
       if (!item.datamov) return;
 
@@ -110,7 +98,6 @@ export const MovementDashboardComp: React.FC = () => {
       const isEntrada = valorUnitario > 0 && (nomeCategoria.includes("ENTRADA") || nomeCategoria.includes("RECEITA"));
       const chaveLinha = `cat-id-${codCat}`;
 
-      // Loop distribuidor de meses/parcelas
       for (let i = 0; i < mesesDuracao; i++) {
         const dataReferenciaParcela = dataInicio.add(i, "month");
         const chaveMes = dataReferenciaParcela.format("YYYY-MM");
@@ -120,7 +107,6 @@ export const MovementDashboardComp: React.FC = () => {
             linhaEntrada.valores[chaveMes] += valorUnitario;
           }
         } else {
-          // Soma cumulativa na linha unificada da categoria
           if (linhasDinamicas[chaveLinha] && linhasDinamicas[chaveLinha].valores[chaveMes] !== undefined) {
             linhasDinamicas[chaveLinha].valores[chaveMes] += valorUnitario;
           }
@@ -128,7 +114,6 @@ export const MovementDashboardComp: React.FC = () => {
       }
     });
 
-    // Passo 3: Cálculos dos Totais do Rodapé Financeiro
     const totaisPagamento = {} as Record<string, number>;
     const faltaSobra = {} as Record<string, number>;
 
@@ -143,7 +128,6 @@ export const MovementDashboardComp: React.FC = () => {
       faltaSobra[m.chaveIdentificadora] = (linhaEntrada.valores[m.chaveIdentificadora] || 0) - somaSaidasMes;
     });
 
-    // Retorna a lista unificada ordenada por ID de categoria + as linhas de fechamento
     return [
       ...Object.values(linhasDinamicas).map((linha) => ({ key: `din-id-${linha.codcategoria}`, ...linha })),
       { key: "total-saidas", categoria: "TOTAIS DESPESAS", valores: totaisPagamento, rowType: "total" },
@@ -152,14 +136,13 @@ export const MovementDashboardComp: React.FC = () => {
     ];
   }, [dataRaw, MESES_CONFIG]);
 
-  // 4. CONFIGURAÇÃO DAS COLUNAS (Foco total no Grupo/Categoria unificado)
   const columns = useMemo(() => {
     const colunasFixasEsquerda = [
       {
         title: "CATEGORIA / PLANO CONTAS",
         dataIndex: "categoria",
         key: "categoria",
-        width: 260,
+        width: 160,
         fixed: "left" as const,
         render: (text: string, record: any) => {
           if (record.rowType === "resultado") return <Text strong type={text.includes("SOBRA") ? "success" : "danger"}>{text}</Text>;
@@ -205,7 +188,6 @@ export const MovementDashboardComp: React.FC = () => {
     return [...colunasFixasEsquerda, ...colunasMesesDinamicos];
   }, [MESES_CONFIG]);
 
-  // CARD DE KPIS NO TOPO
   const cardStats = useMemo(() => {
     let totalEntradas = 0;
     let totalSaidas = 0;
@@ -229,7 +211,10 @@ export const MovementDashboardComp: React.FC = () => {
 
   return (
     <Space direction="vertical" size="middle" style={{ width: "100%", padding: "4px" }}>
-      {/* KPIs DE PROJEÇÃO */}
+       <div style={{ marginBottom: "24px" }}>
+        <Title level={2}>Dashboard</Title>
+        <Text type="secondary">Selecione uma das opções abaixo para realizar operações no sistema.</Text>
+      </div>
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={8}>
           <Card bordered={false} style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
@@ -273,7 +258,7 @@ export const MovementDashboardComp: React.FC = () => {
       <Card 
         title={
           <Space>
-            <BarChartOutlined style={{ color: "#1890ff" }} />
+            {/* <BarChartOutlined style={{ color: "#1890ff" }} /> */}
             <span>Matriz de Fluxo de Caixa Agrupada por Código de Categoria</span>
           </Space>
         }

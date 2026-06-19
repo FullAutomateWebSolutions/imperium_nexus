@@ -17,12 +17,12 @@ import { CardForm } from "../form/card.form";
 import { StatusForm } from "../form/status.form";
 import { PaymentMethodForm } from "../form/paymentMethod.form";
 
-import { CategoryList } from "./Category.page";
-import { AccountList } from "./Account.page";
-import { CardList } from "./Card.page";
-import { StatusList } from "./StatusList.page";
-import { PaymentMethodList } from "./PaymentMethod.page";
-import { Movement } from "./movimentList.page";
+import { CategoryList } from "../page/Category.page";
+import { AccountList } from "../page/Account.page";
+import { CardList } from "../page/Card.page";
+import { PaymentMethodList } from "../page/paymentMethodList.page";
+import { Movement } from "../page/movimentList.page";
+import { StatusList } from "../page/StatusList.page";
 
 const { Title, Text } = Typography;
 

@@ -1,3 +1,10 @@
+export interface User {
+  codusuario: number | undefined;
+  nome: string;
+  email: string;
+  role: "ADMIN" | "USER";
+  indativo: boolean;
+}
 
 export interface Category {
   codcategoria: number | undefined;
@@ -47,6 +54,18 @@ export interface PaymentMethod {
 // ==========================================
 // CLASSES MODELO
 // ==========================================
+
+export class User implements User {
+  codusuario: number | undefined;
+  nome: string = "";
+  email: string ="";
+  role: "ADMIN" | "USER" = "USER";
+  indativo: boolean = false;
+
+  constructor(init?: Partial<User>) {
+    if (init) Object.assign(this, init);
+  }
+}
 
 export class Category implements Category {
   codcategoria: number | undefined;

@@ -5,7 +5,15 @@ const restHttpService = new RestHttpService();
 
 async function save(params: MovementType): Promise<any> {
   try {
-    const response = await restHttpService.getHttpInstance().post("/movimentacao/", params);
+    const userJson = localStorage.getItem("faws:user");
+    const user = userJson ? JSON.parse(userJson) : null;
+
+    const payload = {
+      ...params,
+      codusuario: user?.codusuario 
+    };
+
+    const response = await restHttpService.getHttpInstance().post("/movimentacao/", payload);
     return response.data;
   } catch (err) {
     handleApiError(err);
@@ -14,7 +22,15 @@ async function save(params: MovementType): Promise<any> {
 
 async function update(params: MovementType): Promise<MovementResponse> {
   try {
-    const response = await restHttpService.getHttpInstance().put<MovementResponse>(`/movimentacao/${params.codmovimentacao}`, params);
+    const userJson = localStorage.getItem("faws:user");
+    const user = userJson ? JSON.parse(userJson) : null;
+
+    const payload = {
+      ...params,
+      codusuario: user?.codusuario
+    };
+
+    const response = await restHttpService.getHttpInstance().put<MovementResponse>(`/movimentacao/${params.codmovimentacao}`, payload);
     return response.data;
   } catch (err) {
     handleApiError(err);
