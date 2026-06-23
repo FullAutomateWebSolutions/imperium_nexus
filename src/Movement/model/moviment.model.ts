@@ -212,14 +212,14 @@ export interface MovementFilter {
   codmovimentacao?: string;
   descmovimento?: string;
   codcategoria?: number;
-  codconta?: number;
+  codconta?: number | undefined;
   page: number;
   size: number;
   sort?: string;
 }
 
 export interface MovementDelete {
-  id: string | undefined; // Mapeado como string para coincidir com o "codmovimentacao" do JSON
+  id: string | undefined; 
 }
 
 export interface MovementById {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import { Button, Flex, Form, Input, InputNumber, notification, Space, Switch, DatePicker, Row, Col, Select } from "antd";
+import { Button, Flex, Form, Input, InputNumber, notification, Switch, DatePicker, Row, Col, Select, Grid } from "antd";
 import { FormEditing, FormConfig } from "../../../components/form/formConfig";
 
 import { useMovement } from "../../hook/useMovement";
@@ -7,12 +7,14 @@ import { ApiValidationError } from "@/api/axios";
 import dayjs from "dayjs";
 import { MovementType, Movement } from "../../model/moviment.model";
 
-// Importações dos hooks para alimentar os Selects
+// Hooks para alimentar os Selects
 import { useAccount } from "@/Movement/hook/useAccount";
 import { useCard } from "@/Movement/hook/useCard";
 import { useCategory } from "@/Movement/hook/useCategory";
 import { usePaymentMethod } from "@/Movement/hook/usePaymentMethod";
 import { useStatus } from "@/Movement/hook/useStatus";
+
+const { useBreakpoint } = Grid;
 
 interface MovementFormValues {
     formEditing: FormEditing;
@@ -21,7 +23,6 @@ interface MovementFormValues {
 }
 
 export const MovementForm = ({ formEditing, data, onClose }: MovementFormValues) => {
-    // 1. Instanciando os serviços de API disponíveis
     const { saveMovement, fetchByIdMovement, updateMovement } = useMovement();
     const { listAccount } = useAccount();
     const { listCard } = useCard();
@@ -31,6 +32,9 @@ export const MovementForm = ({ formEditing, data, onClose }: MovementFormValues)
 
     const [form] = Form.useForm<any>(); 
     
+    const screens = useBreakpoint();
+    const isMobile = screens.md === false;
+    
     const formConfig = useMemo(() => { return new FormConfig({ formEditing }); }, [formEditing, data]);
     const formMovement = useMemo(() => { return new Movement(); }, [formEditing, data]);
     
@@ -39,18 +43,20 @@ export const MovementForm = ({ formEditing, data, onClose }: MovementFormValues)
         formConfig.isEdit() || formConfig.isView()
     );
 
-    // 2. Executando as queries para carregar as opções dos combos
     const accountQuery = listAccount ? listAccount({}) : { data: null, isLoading: false };
     const categoryQuery = listCategory ? listCategory({}) : { data: null, isLoading: false };
     const cardQuery = listCard ? listCard({}) : { data: null, isLoading: false };
     const paymentMethodQuery = listPaymentMethod ? listPaymentMethod({}) : { data: null, isLoading: false };
     const statusQuery = listStatus ? listStatus({}) : { data: null, isLoading: false };
-
-    // Extração segura de dados (Suporta paginação .content ou array cru)
+    //@ts-ignore
     const accountsData = accountQuery.data?.content ?? accountQuery.data ?? [];
+        //@ts-ignore
     const categoriesData = categoryQuery.data?.content ?? categoryQuery.data ?? [];
+        //@ts-ignore
     const cardsData = cardQuery.data?.content ?? cardQuery.data ?? [];
+    //@ts-ignore
     const paymentMethodsData = paymentMethodQuery.data?.content ?? paymentMethodQuery.data ?? [];
+        //@ts-ignore
     const statusData = statusQuery.data?.content ?? statusQuery.data ?? [];
 
     useEffect(() => {
@@ -87,104 +93,101 @@ export const MovementForm = ({ formEditing, data, onClose }: MovementFormValues)
             datamov: values.datamov ? values.datamov.toISOString() : undefined,
         };
 
-        if (formConfig.isEdit()) {
-            updateMovement.mutate(payload, {
-                onSuccess: (e) => {
-                    notification.success({ message: e.message || "Atualizado com sucesso!" });
-                    form.resetFields();
-                    onClose();
-                },
-                onError: (err: any) => {
-                    const response: ApiValidationError = err;
-                    if (!response?.errors) return;
+        const mutation = formConfig.isEdit() ? updateMovement : saveMovement;
+        const successMessage = formConfig.isEdit() ? "Atualizado com sucesso!" : "Cadastrado com sucesso!";
 
-                    form.setFields(
-                        response.errors.map((error: any) => ({
-                            name: error.field,
-                            errors: [error.message],
-                        }))
-                    );
-                }
-            });
-        } else {
-            saveMovement.mutate(payload, {
-                onSuccess: () => {
-                    notification.success({ message: "Cadastrado com sucesso!" });
-                    form.resetFields();
-                    onClose();
-                },
-                onError: (err: any) => {
-                    const response: ApiValidationError = err;
-                    if (!response?.errors) return;
+        mutation.mutate(payload, {
+            onSuccess: (e) => {
+                notification.success({ message: e?.message || successMessage });
+                form.resetFields();
+                onClose();
+            },
+            onError: (err: any) => {
+                const response: ApiValidationError = err;
+                if (!response?.errors) return;
 
-                    form.setFields(
-                        response.errors.map((error: any) => ({
-                            name: error.field,
-                            errors: [error.message],
-                        }))
-                    );
-                }
-            });
-        }
+                form.setFields(
+                    response.errors.map((error: any) => ({
+                        name: error.field,
+                        errors: [error.message],
+                    }))
+                );
+            }
+        });
     };
 
     return (
-        <div>
-            <Flex style={{ justifyContent: "center", marginBottom: 20, marginTop: 20 }}>
+        <div style={{ padding: isMobile ? "0 4px" : "0" }}>
+            <Flex style={{ justifyContent: "center", marginBottom: 10, marginTop: 10 }}>
                 <Form
                     disabled={formConfig.isView()}
                     form={form}
                     layout="vertical"
                     onFinish={handleSubmit}
-                    style={{ margin: "0 auto", width: 600 }}
+                    style={{ 
+                        width: "100%", 
+                        maxWidth: 600 
+                    }}
                 >
-                    <Row gutter={16}>
-                        <Col span={24}>
-                            <Form.Item label="Descrição do Movimento" name="descmovimento">
-                                <Input />
+                    <Row gutter={[16, 0]}>
+                        <Col xs={24}>
+                            <Form.Item 
+                                label="Descrição do Movimento" 
+                                name="descmovimento"
+                                rules={[{ required: true, message: "Informe a descrição" }]}
+                            >
+                                <Input maxLength={150} />
                             </Form.Item>
                         </Col>
                         
-                        <Col span={12}>
-                            <Form.Item label="Valor Unitário" name="valorunit">
+                        <Col xs={24} sm={12}>
+                            <Form.Item 
+                                label="Valor Unitário" 
+                                name="valorunit"
+                                rules={[{ required: true, message: "Informe o valor" }]}
+                            >
                                 <InputNumber style={{ width: '100%' }} placeholder="0.00" precision={2} step={0.01} />
                             </Form.Item>
                         </Col>
-                        <Col span={12}>
+                        
+                        <Col xs={24} sm={12}>
                             <Form.Item label="Data Movimento" name="datamov">
                                 <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
                             </Form.Item>
                         </Col>
 
-                        <Col span={12}>
+                        <Col xs={24} sm={12}>
                             <Form.Item label="Porcentagem Juros" name="porcjuros">
                                 <InputNumber style={{ width: '100%' }} placeholder="0" precision={2} />
                             </Form.Item>
                         </Col>
-                        <Col span={12}>
+                        
+                        <Col xs={24} sm={12}>
                             <Form.Item label="Valor Juros" name="valorjuros">
                                 <InputNumber style={{ width: '100%' }} placeholder="0.00" precision={2} disabled />
                             </Form.Item>
                         </Col>
 
-                        <Col span={8}>
+                        {/* Divisão inteligente de parcelas: 3 colunas no desktop, empilhado/quebrado no mobile */}
+                        <Col xs={12} sm={8}>
                             <Form.Item label="Parc. Atual" name="qtdparcatual">
                                 <InputNumber style={{ width: '100%' }} min={1} />
                             </Form.Item>
                         </Col>
-                        <Col span={8}>
+                        
+                        <Col xs={12} sm={8}>
                             <Form.Item label="Parc. Final" name="qtdparcfinal">
                                 <InputNumber style={{ width: '100%' }} min={1} />
                             </Form.Item>
                         </Col>
-                        <Col span={8}>
+                        
+                        <Col xs={24} sm={8}>
                             <Form.Item label="Tipo Parcelamento" name="tipoparcelamento">
                                 <InputNumber style={{ width: '100%' }} />
                             </Form.Item>
                         </Col>
 
-                        {/* 3. SELECT CATEGORIA */}
-                        <Col span={12}>
+                        <Col xs={24} sm={12}>
                             <Form.Item label="Categoria" name="codcategoria">
                                 <Select
                                     placeholder="Selecione a categoria"
@@ -200,8 +203,7 @@ export const MovementForm = ({ formEditing, data, onClose }: MovementFormValues)
                             </Form.Item>
                         </Col>
 
-                        {/* SELECT CONTA */}
-                        <Col span={12}>
+                        <Col xs={24} sm={12}>
                             <Form.Item label="Conta" name="codconta">
                                 <Select
                                     placeholder="Selecione a conta"
@@ -217,8 +219,7 @@ export const MovementForm = ({ formEditing, data, onClose }: MovementFormValues)
                             </Form.Item>
                         </Col>
 
-                        {/* SELECT FORMA DE PAGAMENTO */}
-                        <Col span={12}>
+                        <Col xs={24} sm={12}>
                             <Form.Item label="Forma Pagamento" name="codformpag">
                                 <Select
                                     placeholder="Selecione a forma"
@@ -234,8 +235,7 @@ export const MovementForm = ({ formEditing, data, onClose }: MovementFormValues)
                             </Form.Item>
                         </Col>
 
-                        {/* SELECT CARTÃO */}
-                        <Col span={12}>
+                        <Col xs={24} sm={12}>
                             <Form.Item label="Cartão" name="codcartao">
                                 <Select
                                     placeholder="Selecione o cartão"
@@ -251,8 +251,7 @@ export const MovementForm = ({ formEditing, data, onClose }: MovementFormValues)
                             </Form.Item>
                         </Col>
 
-                        {/* SELECT STATUS */}
-                        <Col span={12}>
+                        <Col xs={24} sm={12}>
                             <Form.Item label="Status" name="codstatus">
                                 <Select
                                     placeholder="Selecione o status"
@@ -268,27 +267,55 @@ export const MovementForm = ({ formEditing, data, onClose }: MovementFormValues)
                             </Form.Item>
                         </Col>
 
-                        <Col span={12}>
-                            <Form.Item label="Ativo" name="indativo" valuePropName="checked">
+                        <Col xs={24} sm={12}>
+                            <Form.Item 
+                                label="Ativo" 
+                                name="indativo" 
+                                valuePropName="checked"
+                                style={{ 
+                                    marginBottom: isMobile ? 24 : 0,
+                                    display: isMobile ? "flex" : "block",
+                                    justifyContent: "space-between",
+                                    alignItems: "center"
+                                }}
+                            >
                                 <Switch />
                             </Form.Item>
                         </Col>
                     </Row>
 
-                    <Form.Item style={{ marginTop: 10 }}>
-                        <Space wrap>
-                            <Button htmlType="submit" type="primary">
-                                Salvar
-                            </Button>
-                            <Button htmlType="reset" type="dashed" onClick={() => form.resetFields()}>
-                                Limpar
-                            </Button>
-                        </Space>
+                    {/* Botões de ação mobile-friendly */}
+                    <Form.Item style={{ marginTop: isMobile ? 16 : 24, marginBottom: 12 }}>
+                        <div style={{ 
+                            display: "flex", 
+                            gap: "12px", 
+                            justifyContent: isMobile ? "stretch" : "flex-start" 
+                        }}>
+                            {!formConfig.isView() && (
+                                <Button 
+                                    htmlType="submit" 
+                                    type="primary" 
+                                    style={{ flex: isMobile ? 1 : "none" }}
+                                >
+                                    Salvar
+                                </Button>
+                            )}
+                            {!formConfig.isView() && (
+                                <Button 
+                                    htmlType="button" 
+                                    type="dashed" 
+                                    onClick={() => form.resetFields()}
+                                    style={{ flex: isMobile ? 1 : "none" }}
+                                >
+                                    Limpar
+                                </Button>
+                            )}
+                        </div>
                     </Form.Item>
 
                     {formConfig.isEdit() && formMovement.dataatualizacao && (
-                        <p style={{ color: 'gray', fontSize: '12px' }}>
-                            Data de modificação: {dayjs(formMovement.dataatualizacao).format("DD/MM/YYYY HH:mm")}
+                        <p style={{ color: 'gray', fontSize: '11px', textAlign: isMobile ? 'center' : 'left', margin: 0 }}>
+                            Última modificação: {dayjs(formMovement.dataatualizacao).format("DD/MM/YYYY HH:mm")}
                         </p>
                     )}
                 </Form>

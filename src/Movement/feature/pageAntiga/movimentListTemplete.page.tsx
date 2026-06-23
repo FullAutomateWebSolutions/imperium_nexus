@@ -75,8 +75,9 @@ export const Movement = observer(() => {
   const { listCategory } = useCategory();
   const accountQuery = listAccount ? listAccount({}) : { data: null, isLoading: false };
   const categoryQuery = listCategory ? listCategory({}) : { data: null, isLoading: false };
-
+//@ts-ignore
   const accountsData = accountQuery.data?.content ?? accountQuery.data ?? [];
+  //@ts-ignore
   const categoriesData = categoryQuery.data?.content ?? categoryQuery.data ?? [];
 
   const handleDelete = (id: number) => {
@@ -122,7 +123,9 @@ export const Movement = observer(() => {
     page: pagination.page,
     size: pagination.size,
     descmovimento: query.descmovimento,
+    //@ts-ignore
     codcategoria: query.codcategoria,
+    //@ts-ignore
     codconta: query.codconta,
     datainicio: query.datainicio,
     datafim: query.datafim,
@@ -180,17 +183,17 @@ export const Movement = observer(() => {
         return (
           <Space direction="vertical" size={1}>
             <div>
-              <Text type="secondary" size="small">Unitário: </Text>
+              <Text type="secondary" >Unitário: </Text>
               <Text strong>R$ {vUnit.toFixed(2)}</Text>
             </div>
             {vJuros > 0 && (
               <div>
-                <Text type="danger" size="small">Juros ({pJuros}%): </Text>
+                <Text type="danger" >Juros ({pJuros}%): </Text>
                 <Text type="danger" strong>+ R$ {vJuros.toFixed(2)}</Text>
               </div>
             )}
             <div style={{ borderTop: "1px dashed #f0f0f0", marginTop: 2, paddingTop: 2 }}>
-              <Text type="secondary" size="small">Total Parcela: </Text>
+              <Text type="secondary" >Total Parcela: </Text>
               <Text strong style={{ color: "#237804" }}>
                 R$ {(vUnit + vJuros).toFixed(2)}
               </Text>
@@ -217,10 +220,10 @@ export const Movement = observer(() => {
             
             {record.qtdparcfinal > 1 ? (
               <div style={{ marginTop: 4 }}>
-                <Text size="small" type="secondary">Evolução: </Text>
+                <Text  type="secondary">Evolução: </Text>
                 <Text strong>{record.qtdparcatual} de {record.qtdparcfinal}</Text>
                 <br />
-                <Text size="small" type="secondary">Pendente: </Text>
+                <Text  type="secondary">Pendente: </Text>
                 <Text type="warning" strong>{record.qtdparcpendente} parc. (R$ {totalPend.toFixed(2)})</Text>
               </div>
             ) : (
@@ -268,7 +271,7 @@ export const Movement = observer(() => {
       width: "12%",
       align: "center" as const,
       render: (_: any, record: MovementType) => (
-        <Space size="small">
+        <Space >
           <Button
             type="text"
             icon={<EditOutlined style={{ color: "#1890ff" }} />}

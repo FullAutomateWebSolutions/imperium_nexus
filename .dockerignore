@@ -1,3 +1,8 @@
 node_modules
-Dockerfile
+build
 .git
+.gitignore
+Dockerfile
+docker-compose.yml
+.env
+.env.local

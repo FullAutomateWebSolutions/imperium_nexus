@@ -65,8 +65,8 @@ export const Movement = observer(() => {
   const { listCategory } = useCategory();
   const accountQuery = listAccount ? listAccount({}) : { data: null, isLoading: false };
   const categoryQuery = listCategory ? listCategory({}) : { data: null, isLoading: false };
-
-  const accountsData = accountQuery.data?.content ?? accountQuery.data ?? [];
+//@ts-ignore
+  const accountsData = accountQuery.data?.content ?? accountQuery.data ?? [];//@ts-ignore
   const categoriesData = categoryQuery.data?.content ?? categoryQuery.data ?? [];
 
   const handleDelete = (id: number) => {
@@ -112,7 +112,9 @@ export const Movement = observer(() => {
     page: pagination.page,
     size: pagination.size,
     descmovimento: query.descmovimento,
+    //@ts-ignore
     codcategoria: query.codcategoria,
+    //@ts-ignore
     codconta: query.codconta,
     datainicio: query.datainicio,
     datafim: query.datafim,

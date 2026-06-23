@@ -27,6 +27,7 @@ interface NavoiationBreadcrumb{
             this.proximo = state.proximo;
             this.atual = state.atual;
         }
+        //@ts-ignore
      makePersistable(this, { name: 'navigationHistory', properties: ['anterior', 'proximo', 'atual'], storage: window.sessionStorage });
     }
 

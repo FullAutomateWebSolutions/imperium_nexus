@@ -1,10 +1,12 @@
 import { useEffect, useMemo } from "react";
-import { Button, Flex, Form, Input, notification, Space, Switch, Row, Col } from "antd";
+import { Button, Flex, Form, Input, notification, Switch, Row, Col, Grid } from "antd";
 import { FormEditing, FormConfig } from "../../../components/form/formConfig";
-import { useCategory } from "../../hook/useCategory"; // Ajuste o path conforme seu projeto
+import { useCategory } from "../../hook/useCategory"; 
 import { ApiValidationError } from "@/api/axios";
 import dayjs from "dayjs";
-import { Category } from "../../model/moviment.model"; // Ajuste o nome da classe modelo se necessário
+import { Category } from "../../model/moviment.model"; 
+
+const { useBreakpoint } = Grid;
 
 interface CategoryFormValues {
     formEditing: FormEditing;
@@ -15,13 +17,22 @@ interface CategoryFormValues {
 export const CategoryForm = ({ formEditing, data, onClose }: CategoryFormValues) => {
     const { saveCategory, fetchByIdCategory, updateCategory } = useCategory();
     const [form] = Form.useForm<Category>();
+    
+    const screens = useBreakpoint();
+    const isMobile = screens.md === false;
+    
     const formConfig = useMemo(() => { return new FormConfig({ formEditing }); }, [formEditing, data]);
     const formCategory = useMemo(() => { return new Category(); }, [formEditing, data]);
-    const { data: categoryData } = fetchByIdCategory({ id: data?.codcategoria }, formConfig.isEdit() || formConfig.isView());
+    
+    const { data: categoryData } = fetchByIdCategory(
+        { id: data?.codcategoria }, 
+        formConfig.isEdit() || formConfig.isView()
+    );
 
     useEffect(() => {
         if (!categoryData) return;
         Object.assign(formCategory, data);
+        
         form.setFieldsValue({
             codcategoria: categoryData.codcategoria,
             desccategoria: categoryData.desccategoria,
@@ -35,12 +46,12 @@ export const CategoryForm = ({ formEditing, data, onClose }: CategoryFormValues)
     const handleSubmit = async (values: Category) => {
         const categoryDataInstance = new Category();
         Object.assign(categoryDataInstance, values);
+        
         if (formCategory.codcategoria !== 0) {
            categoryDataInstance.codcategoria = formCategory.codcategoria;  
-        }else{
-            categoryDataInstance.codcategoria = undefined
+        } else {
+            categoryDataInstance.codcategoria = undefined;
         }
-       
 
         const mutation = formConfig.isEdit() ? updateCategory : saveCategory;
         const successMessage = formConfig.isEdit() ? "Atualizado com sucesso!" : "Cadastrado com sucesso!";
@@ -66,43 +77,79 @@ export const CategoryForm = ({ formEditing, data, onClose }: CategoryFormValues)
     };
 
     return (
-        <div>
-            <Flex style={{ justifyContent: "center", marginBottom: 20, marginTop: 20 }}>
+        <div style={{ padding: isMobile ? "0 4px" : "0" }}>
+            <Flex style={{ justifyContent: "center", marginBottom: 10, marginTop: 10 }}>
                 <Form
                     disabled={formConfig.isView()}
                     form={form}
                     layout="vertical"
                     onFinish={handleSubmit}
-                    style={{ margin: "0 auto", width: 600 }}
+                    style={{ 
+                        width: "100%", 
+                        maxWidth: 600 
+                    }}
                 >
-                    <Row gutter={16}>
-                        <Col span={18}>
-                            <Form.Item label="Descrição da Categoria" name="desccategoria">
-                                <Input />
+                    <Row gutter={[16, 0]}>
+                        {/* No mobile ocupa a largura total (xs={24}), no desktop segue a proporção 18/6 */}
+                        <Col xs={24} md={18}>
+                            <Form.Item 
+                                label="Descrição da Categoria" 
+                                name="desccategoria"
+                                rules={[{ required: true, message: "Informe a descrição da categoria" }]}
+                            >
+                                <Input maxLength={100} />
                             </Form.Item>
                         </Col>
                         
-                        <Col span={6}>
-                            <Form.Item label="Ativo" name="indativo" valuePropName="checked">
+                        <Col xs={24} md={6}>
+                            <Form.Item 
+                                label="Ativo" 
+                                name="indativo" 
+                                valuePropName="checked"
+                                style={{ 
+                                    marginBottom: isMobile ? 24 : 0,
+                                    display: isMobile ? "flex" : "block",
+                                    justifyContent: "space-between",
+                                    alignItems: "center"
+                                }}
+                            >
                                 <Switch />
                             </Form.Item>
                         </Col>
                     </Row>
 
-                    <Form.Item style={{ marginTop: 10 }}>
-                        <Space wrap>
-                            <Button htmlType="submit" type="primary">
-                                Salvar
-                            </Button>
-                            <Button htmlType="reset" type="dashed" onClick={() => form.resetFields()}>
-                                Limpar
-                            </Button>
-                        </Space>
+                    {/* Botões expandidos lado a lado no mobile */}
+                    <Form.Item style={{ marginTop: isMobile ? 16 : 24, marginBottom: 12 }}>
+                        <div style={{ 
+                            display: "flex", 
+                            gap: "12px", 
+                            justifyContent: isMobile ? "stretch" : "flex-start" 
+                        }}>
+                            {!formConfig.isView() && (
+                                <Button 
+                                    htmlType="submit" 
+                                    type="primary" 
+                                    style={{ flex: isMobile ? 1 : "none" }}
+                                >
+                                    Salvar
+                                </Button>
+                            )}
+                            {!formConfig.isView() && (
+                                <Button 
+                                    htmlType="button" 
+                                    type="dashed" 
+                                    onClick={() => form.resetFields()}
+                                    style={{ flex: isMobile ? 1 : "none" }}
+                                >
+                                    Limpar
+                                </Button>
+                            )}
+                        </div>
                     </Form.Item>
 
                     {formConfig.isEdit() && formCategory.dataatualizacao && (
-                        <p style={{ color: 'gray', fontSize: '12px' }}>
-                            Data de modificação: {dayjs(formCategory.dataatualizacao).format("DD/MM/YYYY HH:mm")}
+                        <p style={{ color: 'gray', fontSize: '11px', textAlign: isMobile ? 'center' : 'left', margin: 0 }}>
+                            Última modificação: {dayjs(formCategory.dataatualizacao).format("DD/MM/YYYY HH:mm")}
                         </p>
                     )}
                 </Form>

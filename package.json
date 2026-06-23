@@ -1,6 +1,6 @@
 {
-  "name": "ImperiumNexus-front",
-  "version": "1.0.20",
+  "name": "financeiro_front",
+  "version": "1.0.40",
   "description": "Sistema Integração Monitoramento Processos",
   "private": true,
   "type": "module",
